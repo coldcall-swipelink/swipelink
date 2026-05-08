@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog - Swipelink</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .articles-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+    }
+    .article-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1.5rem;
+      background: white;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .article-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    .article-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin: 1rem 0;
+      color: #333;
+    }
+    .article-date {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .article-excerpt {
+      color: #555;
+      line-height: 1.6;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <!-- Ton menu existant -->
+  </nav>
+
+  <div class="articles-list" id="articles"></div>
+
+  <script>
+    async function loadArticles() {
+      try {
+        const response = await fetch('/api/blog');
+        const articles = await response.json();
+        
+        const container = document.getElementById('articles');
+        container.innerHTML = articles.map(article => `
+          <div class="article-card" onclick="window.open('${article.url}', '_blank')">
+            <div class="article-date">${new Date(article._createdOn).toLocaleDateString('fr-FR')}</div>
+            <div class="article-title">${article.name}</div>
+            <div class="article-excerpt">${article.description || 'Lire la suite...'}</div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Erreur:', error);
+        document.getElementById('articles').innerHTML = '<p>Erreur lors du chargement des articles</p>';
+      }
+    }
+    
+    loadArticles();
+  </script>
+</body>
+</html>
