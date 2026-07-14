@@ -1,365 +1,1057 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr-FR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Swipelink — Vous ne publiez plus. Vous chassez.</title>
+<meta name="description" content="Une annonce classique, on espère. Un crédit SMARTLINK, on reçoit des profils chassés dès le lendemain. La chasse de talents automatisée pour la grande distribution, CHR, retail et industrie." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.prod.website-files.com" crossorigin>
+<link rel="preload" as="image" href="https://cdn.prod.website-files.com/68063d6ee4f168da919e702d/68d3a5d1c07dfe758815294b_6809220e131d0c917750985a_Image%2023-04-2025%20at%2013.47.jpg" fetchpriority="high">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="https://cdn.prod.website-files.com/68063d6ee4f168da919e702d/680b522768ad433ffc9edf66_safeimagekit-Capture%20d%27%C3%A9cran%202025-04-22%20164446.png" />
+<!-- ===== FUTURISTIC DESIGN LAYER (design only, no copy changes) ===== -->
+<style id="fx-futuristic">
+  :root{
+    --fx-line:rgba(37,99,235,.11);--fx-line2:rgba(37,99,235,.22);
+    --fx-glass:rgba(255,255,255,.62);
+    --fx-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --fx-grad:linear-gradient(100deg,#2563EB,#7C3AED 42%,#EC4899 70%,#F59E0B);
+  }
+  /* --- light futuristic ground: fixed grid + soft glows --- */
+  body{
+    background-color:#F6F9FF !important;
+    background-image:
+      linear-gradient(var(--fx-line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--fx-line) 1px,transparent 1px),
+      radial-gradient(920px 640px at 84% -8%,rgba(37,99,235,.12),transparent 60%),
+      radial-gradient(760px 560px at 4% 6%,rgba(124,58,237,.10),transparent 60%),
+      radial-gradient(720px 620px at 60% 112%,rgba(236,72,153,.07),transparent 60%) !important;
+    background-size:56px 56px,56px 56px,100% 100%,100% 100%,100% 100% !important;
+    background-attachment:fixed !important;
+  }
+  /* HUD monospace eyebrows */
+  .eyebrow,.marquee-eyebrow{font-family:var(--fx-mono) !important;letter-spacing:.2em !important;text-transform:uppercase}
+  .eyebrow::before{content:"// ";opacity:.45}
+  .hero-badge,.trust-badge{font-family:var(--fx-mono) !important;letter-spacing:.08em;
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  /* Glass + neon on light-section cards */
+  .feature-card,.api-card,.hunt-cat,.rule-card,.partner-cell,.pricing-explainer-card,.saas-showcase{
+    background:var(--fx-glass) !important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+    border:1px solid var(--fx-line2) !important;
+    box-shadow:0 1px 2px rgba(15,23,42,.04),0 26px 52px -34px rgba(37,99,235,.45) !important;
+    position:relative;transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s,border-color .3s}
+  .feature-card:hover,.api-card:hover,.hunt-cat:hover{transform:translateY(-5px);
+    border-color:rgba(37,99,235,.4) !important;box-shadow:0 1px 2px rgba(15,23,42,.05),0 34px 60px -30px rgba(124,58,237,.5) !important}
+  /* corner bracket accent on feature/api cards */
+  .feature-card::after,.api-card::after{content:"";position:absolute;top:12px;right:12px;width:14px;height:14px;
+    border-top:1.5px solid var(--fx-line2);border-right:1.5px solid var(--fx-line2);opacity:.7;pointer-events:none}
+  /* Neon buttons */
+  .btn-liquid,.btn-lg-liquid{box-shadow:0 12px 30px -10px rgba(124,58,237,.55) !important}
+  .btn-liquid:hover{box-shadow:0 18px 42px -12px rgba(236,72,153,.6) !important}
+  .btn-outline{backdrop-filter:blur(8px);border-color:var(--fx-line2) !important}
+  .btn-outline:hover{border-color:#2563EB !important;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  /* Neon grid overlay inside dark sections */
+  .section.is-dark{position:relative}
+  .section.is-dark::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.6;
+    background-image:linear-gradient(rgba(130,160,240,.11) 1px,transparent 1px),linear-gradient(90deg,rgba(130,160,240,.11) 1px,transparent 1px);
+    background-size:56px 56px;
+    -webkit-mask-image:radial-gradient(130% 100% at 50% 0%,#000,transparent 82%);mask-image:radial-gradient(130% 100% at 50% 0%,#000,transparent 82%)}
+  .section.is-dark>*{position:relative;z-index:1}
+  /* ===== HERO RADAR (SMARTLINK · sector scan → contact → livraison magasin) ===== */
+  .fx-radar-wrap{margin:2.8rem auto 0;max-width:840px;width:100%}
+  .fx-radar{position:relative;padding:15px 18px 16px;border-radius:22px;
+    background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(238,243,255,.55));
+    -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+    border:1px solid var(--fx-line2);
+    box-shadow:0 34px 80px -44px rgba(37,99,235,.6),inset 0 1px 0 rgba(255,255,255,.85)}
+  .fx-radar::before,.fx-radar::after{content:"";position:absolute;width:16px;height:16px;pointer-events:none}
+  .fx-radar::before{top:10px;left:10px;border-top:1.5px solid var(--fx-line2);border-left:1.5px solid var(--fx-line2)}
+  .fx-radar::after{bottom:10px;right:10px;border-bottom:1.5px solid var(--fx-line2);border-right:1.5px solid var(--fx-line2)}
+  .fx-hud-top,.fx-hud-bot{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+    font-family:var(--fx-mono);font-size:.66rem;letter-spacing:.12em;color:#5A6784;text-transform:uppercase}
+  .fx-hud-bot{margin-top:8px}
+  .fx-hud-top b,.fx-hud-bot b{color:#2563EB;font-weight:700}
+  #fx-status{color:#7C3AED}
+  #fx-radar{width:100%;height:auto;display:block;margin:10px 0 2px}
+  @media (prefers-reduced-motion:reduce){#fx-status{color:#5A6784}}
+</style>
+<meta property="og:title" content="Swipelink — Vous ne publiez plus. Vous chassez." />
+<meta property="og:description" content="La chasse de talents automatisée pour la grande distribution, CHR, retail et industrie. Recevez des profils chassés dès le lendemain." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://swipelink.fr/" />
+<meta property="og:image" content="https://cdn.prod.website-files.com/68063d6ee4f168da919e702d/68d3a5d1c07dfe758815294b_6809220e131d0c917750985a_Image%2023-04-2025%20at%2013.47.jpg" />
+<meta property="og:locale" content="fr_FR" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Swipelink — Vous ne publiez plus. Vous chassez." />
+<meta name="twitter:description" content="La chasse de talents automatisée pour la grande distribution, CHR, retail et industrie." />
+<link rel="canonical" href="https://swipelink.fr/" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://swipelink.fr/#organization",
+      "name": "Swipelink",
+      "url": "https://swipelink.fr/",
+      "logo": "https://cdn.prod.website-files.com/68063d6ee4f168da919e702d/6809da68f1c03b3ee7389a27_Swipelink%20BLEU.png",
+      "description": "Premier cabinet de recrutement digital pour la grande distribution, le CHR et le retail. Chasse de talents automatisée.",
+      "areaServed": "FR",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Sales",
+        "email": "contact@swipelink.fr",
+        "availableLanguage": ["French"]
+      },
+      "sameAs": [
+        "https://www.linkedin.com/company/swipelink"
+      ]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Swipelink SMARTLINK",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "description": "Plateforme SaaS de chasse de talents automatisée pour le retail et la grande distribution.",
+      "offers": {
+        "@type": "Offer",
+        "price": "599",
+        "priceCurrency": "EUR",
+        "priceSpecification": {
+          "@type": "UnitPriceSpecification",
+          "price": "599",
+          "priceCurrency": "EUR",
+          "billingIncrement": 1,
+          "unitText": "MONTH"
+        }
+      },
+      "publisher": { "@id": "https://swipelink.fr/#organization" }
+    },
+    {
+      "@type": "WebSite",
+      "url": "https://swipelink.fr/",
+      "name": "Swipelink",
+      "publisher": { "@id": "https://swipelink.fr/#organization" },
+      "inLanguage": "fr-FR"
+    }
+  ]
+}
+</script>
 </head>
 <body>
-<title>Swipelink — Console de chasse (concept futuriste)</title>
-<style>
-  :root{
-    --bg:#06080F; --bg2:#0A0F1C; --panel:rgba(16,23,42,.55); --panel2:rgba(11,17,32,.8);
-    --line:rgba(120,140,190,.14); --line2:rgba(120,140,190,.30);
-    --text:#E7ECF8; --muted:#8C99B6; --dim:#5A6784;
-    --blue:#4C86FF; --cyan:#39E3FF; --violet:#8B5CF6; --magenta:#EC4899; --amber:#F5A623; --green:#22E0A1;
-    --grad:linear-gradient(100deg,#5B8CFF 0%,#8B5CF6 38%,#EC4899 68%,#F5A623 100%);
-    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
-    --sans:"Inter var",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --maxw:1200px;
-  }
-  *,*::before,*::after{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
-    line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-  a{color:inherit;text-decoration:none}
-  h1,h2,h3{margin:0;letter-spacing:-.03em;line-height:1.02;font-weight:800;text-wrap:balance}
-  p{margin:0}
-  ::selection{background:rgba(139,92,246,.4)}
 
-  /* ---- ambient background ---- */
-  .field{position:fixed;inset:0;z-index:-2;background:
-    radial-gradient(900px 600px at 78% -5%,rgba(76,134,255,.20),transparent 60%),
-    radial-gradient(800px 620px at 8% 12%,rgba(139,92,246,.16),transparent 60%),
-    radial-gradient(760px 620px at 60% 108%,rgba(236,72,153,.12),transparent 60%),
-    var(--bg)}
-  .grid-bg{position:fixed;inset:-2px;z-index:-1;opacity:.5;pointer-events:none;
-    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
-    background-size:52px 52px;mask-image:radial-gradient(120% 90% at 50% 0%,#000 30%,transparent 78%)}
-  .noise{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.035;mix-blend-mode:overlay;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+<a href="#main" class="skip-link">Aller au contenu</a>
 
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
-  .mono{font-family:var(--mono)}
-  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:var(--dim)}
-  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-
-  /* corner-bracket panel */
-  .panel{position:relative;background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-    border:1px solid var(--line);border-radius:16px}
-  .brk::before,.brk::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none}
-  .brk::before{top:9px;left:9px;border-top:1.5px solid var(--line2);border-left:1.5px solid var(--line2)}
-  .brk::after{bottom:9px;right:9px;border-bottom:1.5px solid var(--line2);border-right:1.5px solid var(--line2)}
-
-  /* ---- nav ---- */
-  header{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);
-    background:rgba(6,8,15,.6);backdrop-filter:blur(12px)}
-  .nav{display:flex;align-items:center;gap:26px;height:64px}
-  .logo{font-family:var(--mono);font-weight:700;letter-spacing:.18em;font-size:.9rem;display:flex;align-items:center;gap:9px}
-  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px 1px var(--green);animation:blink 2.4s ease-in-out infinite}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
-  .nav-links{display:flex;gap:24px;margin-left:auto;font-family:var(--mono);font-size:.76rem;letter-spacing:.08em;color:var(--muted)}
-  .nav-links a:hover{color:var(--text)}
-  .btn{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;padding:.7rem 1.15rem;border-radius:10px;
-    display:inline-flex;align-items:center;gap:.5rem;border:1px solid transparent;transition:.25s;cursor:pointer;white-space:nowrap}
-  .btn-primary{background:var(--grad);color:#0a0714;font-weight:700;box-shadow:0 10px 30px -10px rgba(139,92,246,.7)}
-  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px -12px rgba(236,72,153,.7)}
-  .btn-ghost{border-color:var(--line2);color:var(--text)}
-  .btn-ghost:hover{background:rgba(120,140,190,.10);border-color:var(--muted)}
-  .nav .btn-ghost{padding:.55rem 1rem}
-
-  /* ---- hero ---- */
-  .hero{padding:76px 0 40px}
-  .hero-grid{display:grid;grid-template-columns:1.06fr .94fr;gap:52px;align-items:center}
-  .badge{display:inline-flex;align-items:center;gap:.6rem;font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:.5rem .9rem;background:rgba(16,23,42,.5)}
-  .badge .dot{width:7px;height:7px;background:var(--cyan);box-shadow:0 0 10px 1px var(--cyan)}
-  h1{font-size:clamp(2.7rem,6vw,5rem);margin:1.4rem 0 0}
-  h1 s{text-decoration:none;position:relative;color:var(--dim);-webkit-text-fill-color:var(--dim)}
-  h1 s::after{content:"";position:absolute;left:-2%;right:-2%;top:52%;height:.09em;background:var(--muted);transform:rotate(-3deg)}
-  .chasse{position:relative;display:inline-block}
-  .chasse .grad-text{position:relative}
-  .chasse .grad-text{background-size:220% 100%;animation:hue 7s ease-in-out infinite}
-  @keyframes hue{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-  .lede{color:var(--muted);font-size:1.06rem;max-width:34rem;margin:1.6rem 0 0}
-  .cta-row{display:flex;flex-wrap:wrap;gap:14px;margin-top:2rem}
-  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:2rem}
-  .chip{font-family:var(--mono);font-size:.72rem;letter-spacing:.05em;color:var(--muted);
-    border:1px solid var(--line);border-radius:8px;padding:.5rem .75rem;background:rgba(16,23,42,.4);display:flex;gap:.5rem;align-items:center}
-  .chip b{color:var(--text);font-weight:700}
-  .chip i{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);font-style:normal}
-
-  /* radar console */
-  .console{aspect-ratio:1;padding:18px}
-  .console .hud-top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
-  #radar{width:100%;height:calc(100% - 46px);display:block}
-  .console .hud-bot{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;color:var(--muted)}
-  .console .hud-bot b{color:var(--cyan)}
-
-  /* ---- readout band ---- */
-  .readout{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:44px}
-  .readout .wrap{display:grid;grid-template-columns:repeat(4,1fr)}
-  .stat{padding:26px 22px;border-left:1px solid var(--line)}
-  .stat:first-child{border-left:none}
-  .stat .k{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
-  .stat .v{font-size:2rem;font-weight:800;margin-top:.35rem;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-  .stat .v em{font-style:normal;font-size:1rem;color:var(--muted);margin-left:.15rem}
-
-  /* ---- section ---- */
-  section.blk{padding:96px 0}
-  .head{max-width:44rem}
-  .head h2{font-size:clamp(1.9rem,3.4vw,2.9rem);margin-top:1rem}
-  .head p{color:var(--muted);margin-top:1rem;font-size:1.02rem}
-
-  /* protocol timeline */
-  .proto{margin-top:56px;display:grid;grid-template-columns:repeat(5,1fr);gap:16px;position:relative}
-  .node{padding:22px 18px 20px}
-  .node .idx{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;color:var(--cyan)}
-  .node .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin:16px 0 16px;
-    background:linear-gradient(135deg,rgba(76,134,255,.22),rgba(139,92,246,.22));border:1px solid var(--line2);color:var(--text)}
-  .node .ico svg{width:22px;height:22px}
-  .node h3{font-size:1.02rem;letter-spacing:-.01em}
-  .node p{color:var(--muted);font-size:.86rem;margin-top:.5rem}
-  .node .bar{position:absolute;left:0;top:0;height:2px;width:100%;background:linear-gradient(90deg,var(--blue),var(--violet));opacity:.0;transition:.4s}
-  .node:hover .bar{opacity:1}
-  .node:hover{border-color:var(--line2)}
-  .proto::after{content:"";position:absolute;top:74px;left:8%;right:8%;height:1px;z-index:-1;
-    background:repeating-linear-gradient(90deg,var(--line2) 0 6px,transparent 6px 14px)}
-
-  /* pricing module */
-  .mod{margin-top:56px;display:grid;grid-template-columns:1.25fr .9fr;gap:26px}
-  .price{padding:36px}
-  .price .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)}
-  .price .amt{font-size:3.4rem;font-weight:800;letter-spacing:-.03em;margin-top:.6rem;font-variant-numeric:tabular-nums}
-  .price .amt em{font-style:normal;font-size:1rem;color:var(--muted);font-weight:600}
-  .price .desc{color:var(--muted);margin-top:.8rem;max-width:30rem}
-  .feat{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:12px}
-  .feat li{display:flex;gap:.7rem;align-items:flex-start;font-size:.94rem}
-  .feat svg{width:18px;height:18px;color:var(--green);flex-shrink:0;margin-top:3px}
-  .price .btn-primary{margin-top:30px}
-  .aside{padding:30px;display:flex;flex-direction:column;justify-content:center;gap:18px}
-  .aside .row{display:flex;gap:14px;align-items:flex-start}
-  .aside .row .n{font-family:var(--mono);color:var(--cyan);font-size:.8rem;margin-top:2px}
-  .aside .row p{color:var(--muted);font-size:.9rem}
-  .aside .row b{color:var(--text);display:block;font-size:.98rem;font-family:var(--sans);letter-spacing:-.01em}
-
-  /* final cta */
-  .final{position:relative;overflow:hidden;margin:0 0 90px;padding:64px 40px;text-align:center;border-radius:22px}
-  .final h2{font-size:clamp(2rem,4vw,3.2rem)}
-  .final p{color:var(--muted);margin:1rem auto 0;max-width:38rem}
-  .final .cta-row{justify-content:center}
-  .final::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.5;
-    background:radial-gradient(700px 300px at 50% 120%,rgba(236,72,153,.35),transparent 60%),radial-gradient(600px 300px at 50% -40%,rgba(76,134,255,.35),transparent 60%)}
-
-  footer{border-top:1px solid var(--line);padding:34px 0}
-  footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;
-    font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--dim)}
-
-  @media (max-width:900px){
-    .hero-grid{grid-template-columns:1fr;gap:36px}
-    .console{max-width:420px;margin-inline:auto;width:100%}
-    .readout .wrap{grid-template-columns:1fr 1fr}
-    .stat:nth-child(3){border-left:none}
-    .stat:nth-child(n+3){border-top:1px solid var(--line)}
-    .proto{grid-template-columns:1fr 1fr}
-    .proto::after{display:none}
-    .mod{grid-template-columns:1fr}
-    .nav-links{display:none}
-  }
-  @media (max-width:520px){.readout .wrap{grid-template-columns:1fr}.stat{border-left:none;border-top:1px solid var(--line)}.stat:first-child{border-top:none}.proto{grid-template-columns:1fr}}
-  @media (prefers-reduced-motion:reduce){.chasse .grad-text,.dot{animation:none}}
-</style>
-
-<div class="field"></div>
-<div class="grid-bg"></div>
-<div class="noise"></div>
-
-<header>
-  <div class="wrap nav">
-    <div class="logo"><span class="dot"></span>SWIPELINK</div>
-    <nav class="nav-links">
-      <a href="#protocole">PROTOCOLE</a>
-      <a href="#smartlink">SMARTLINK</a>
-      <a href="#demo">CONTACT</a>
+<!-- ============ NAVBAR ============ -->
+<header class="navbar">
+  <div class="container navbar-inner">
+    <a href="index.html" class="navbar-logo" aria-label="Swipelink">
+      <img src="https://cdn.prod.website-files.com/68063d6ee4f168da919e702d/6809da68f1c03b3ee7389a27_Swipelink%20BLEU.png" alt="Swipelink" decoding="async" fetchpriority="high">
+    </a>
+    <nav aria-label="Navigation principale">
+      <ul class="navbar-links">
+        <li><a href="index.html" class="active">Accueil</a></li>
+        <li><a href="a-propos.html">À propos</a></li>
+        <li><a href="tarifs.html">Tarifs</a></li>
+        <li><a href="https://blog.swipelink.fr/blog">Blog</a></li>
+        <li><a href="index.html#api">API</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
     </nav>
-    <a href="#demo" class="btn btn-ghost">SE CONNECTER</a>
-    <a href="#demo" class="btn btn-primary">RÉSERVER UNE DÉMO →</a>
+    <div class="navbar-actions">
+      <a href="https://app.swipelink.fr/recruiter/auth" class="btn btn-outline btn-sm">Se connecter</a>
+      <a href="https://calendar.app.google/DrpxSVXXZdmPwbrh7" target="_blank" rel="noopener" class="btn-liquid is-soft btn-sm-liquid">
+        Demander une démo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+    <button class="mobile-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
   </div>
 </header>
 
+<main id="main">
+
+<!-- ============ HERO ============ -->
 <section class="hero">
-  <div class="wrap hero-grid">
-    <div>
-      <span class="badge"><span class="dot"></span>Le logiciel de chasse automatisée</span>
-      <h1>Vous ne <s>publiez</s> plus.<br><span class="chasse"><span class="grad-text">Vous chassez.</span></span></h1>
-      <p class="lede">La chasse de talents automatisée pour la grande distribution, le CHR et le retail. Profils identifiés, contactés et pré-qualifiés&nbsp;— livrés dès le lendemain.</p>
-      <div class="cta-row">
-        <a href="#demo" class="btn btn-primary">RÉSERVER UNE DÉMONSTRATION →</a>
-        <a href="#protocole" class="btn btn-ghost">VOIR LE PROTOCOLE</a>
-      </div>
-      <div class="chips">
-        <span class="chip"><i></i>SOURCING&nbsp;<b>ACTIF</b></span>
-        <span class="chip"><i></i>RAYON&nbsp;<b>20 KM</b></span>
-        <span class="chip"><i></i>LIVRAISON&nbsp;<b>&lt; 24 H</b></span>
-      </div>
+  <!-- Bulles animées multi-color, scoped au hero (3 max pour la perf GPU) -->
+  <div class="bubbles" aria-hidden="true">
+    <span class="bubble b1"></span>
+    <span class="bubble b2"></span>
+    <span class="bubble b3"></span>
+  </div>
+  <div class="hero-blob b1"></div>
+  <div class="hero-blob b2"></div>
+
+  <!-- Trust badge -->
+  <div class="trust-badge" role="note">
+    <div class="trust-logos">
+      <span class="trust-logo"><img src="https://cdn.prod.website-files.com/68063d6ee4f168da919e702d/68c01c9b6aef8bda03438d89_4.png" alt="Carrefour" loading="lazy" decoding="async"></span>
+      <span class="trust-logo"><img src="https://cdn.prod.website-files.com/68063d6ee4f168da919e702d/68c01c9bdc6f49dccb6095fb_5.png" alt="Intermarché" loading="lazy" decoding="async"></span>
+      <span class="trust-logo"><img src="https://cdn.prod.website-files.com/68063d6ee4f168da919e702d/68c01c9bd85fcb9e491c7de1_2.png" alt="Monoprix" loading="lazy" decoding="async"></span>
+      <span class="trust-logo"><img src="https://cdn.prod.website-files.com/68063d6ee4f168da919e702d/68c01c9bad1379eee8032706_6.png" alt="Leclerc" loading="lazy" decoding="async"></span>
+      <span class="trust-logo trust-logo-svg trust-logo-auchan" title="Auchan">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="Auchan"><title>Auchan</title><path fill="#E2001A" d="m14.467 18.7529 1.6518 4.6358h1.2185l-1.7447-4.8583a7.9586 7.9586 0 0 1-1.1256.2217M0 23.3888h5.5057l1.7822-5.6112H1.9158A107.284 107.284 0 0 0 0 23.3879m7.2547-12.6334L10.4337 8.1c.5205-1.4086 1.0642-2.8197 1.6295-4.0216.2822.6408.5495 1.2816.83 1.9639 1.2268-1.0077 2.0328-1.5555 2.0735-1.582l.0164-.0117a5.6618 5.6618 0 0 1 1.632-.7064 112.7775 112.7775 0 0 0-1.4817-3.131h-6.169c-.5146.9903-2.4329 4.9521-4.6765 10.399h2.2694c.3693 0 .5544-.1362.6972-.2557m12.9073 4.4076a7.4539 7.4539 0 0 1-3.473 2.9658l1.8702 5.2609H24c-1.0874-3.3012-2.2536-6.2786-3.3484-9.0684-.1527.303-.3155.5603-.4898.8409M18.549 6.2946c.157 0 .303.0365.4358.1005-.0264-.0042-.054-.0092-.0813-.0092a.5844.5844 0 0 0-.5844.581.581.581 0 0 0 .5844.5803.581.581 0 0 0 .5827-.5794c0-.02-.0025-.0374-.004-.0548a.9987.9987 0 0 1 .0772.3843c0 .5528-.4524 1.0027-1.0102 1.0027-.5556.0014-1.0074-.4471-1.0102-1.0027 0-.5561.4532-1.0027 1.0102-1.0027zm-5.6393 11.3178c1.3297 0 4.503-.3378 6.2204-3.096 1.7198-2.76 2.3191-7.1386 2.3191-7.1386l1.8826-.8923c.1179-.0589.0872-.2623-.0565-.2623H21.246c-.318-.4955-1.4194-1.5497-3.0422-1.5497-.9628 0-1.8062.2715-2.5615.7637 0 0-1.1015.7503-2.7035 2.1282l-4.904 4.0797c-.3776.3155-.84.5205-1.4791.5205H.3858c-.1743 0-.1162.146-.088.2307.435 1.3256 1.5962 2.5085 3.6232 2.5085l-1.4476 1.4916c-.0573.0564-.0573.2258.0863.2258h5.5049c3.9784 0 6.4246-1.7415 8.0324-4.1545.1378-.2067.2673-.4266.3901-.6391.0606.0282.0664.0863.0381.1428-.4059.9794-1.4194 2.965-3.2737 4.1452-.6392.3736-.8417.489-1.7398.8334-.0614.0266-.0863.1245-.0581.2092l2.2279 6.2295h1.216l-2.042-5.7771h.0557z"/></svg>
+      </span>
+      <span class="trust-logo"><img src="https://cdn.prod.website-files.com/68063d6ee4f168da919e702d/69381500108e3bb3fbcc82eb_3.png" alt="McDonald's" loading="lazy" decoding="async"></span>
+      <span class="trust-logo trust-more">+94</span>
+    </div>
+    <div class="trust-text">
+      <span class="trust-text-main">Adopté par +100 magasins</span>
+      <span class="trust-stars-row">
+        <span class="trust-stars" aria-label="4,9 étoiles sur 5">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15 9 22 9 16.5 13.5 18.5 21 12 16.5 5.5 21 7.5 13.5 2 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15 9 22 9 16.5 13.5 18.5 21 12 16.5 5.5 21 7.5 13.5 2 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15 9 22 9 16.5 13.5 18.5 21 12 16.5 5.5 21 7.5 13.5 2 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15 9 22 9 16.5 13.5 18.5 21 12 16.5 5.5 21 7.5 13.5 2 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15 9 22 9 16.5 13.5 18.5 21 12 16.5 5.5 21 7.5 13.5 2 9 9 9"/></svg>
+        </span>
+        <span class="trust-rating">4,9/5</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="container">
+    <div data-reveal>
+      <span class="hero-badge hero-badge-clean">
+        <span class="badge-pulse-dot" aria-hidden="true"></span>
+        <span>Le logiciel de chasse automatisée.</span>
+      </span>
     </div>
 
-    <div class="panel brk console">
-      <div class="hud-top"><span>RADAR · SOURCING</span><span>LAT 43.29 · LON 5.37</span></div>
-      <canvas id="radar" width="600" height="600"></canvas>
-      <div class="hud-bot"><span>CIBLES&nbsp;: <b>17</b></span><span>SCORE MOY.&nbsp;: <b>91%</b></span></div>
+    <h1 data-reveal data-reveal-delay="100">
+      Vous ne <span class="strike-out">publiez</span> plus. <span class="gradient-text">Vous chassez.</span>
+    </h1>
+
+    <p class="hero-promise" data-reveal data-reveal-delay="180">
+      <span class="promise-x10"></span>
+    </p>
+
+    <div class="hero-cta" data-reveal data-reveal-delay="300">
+      <a href="https://calendar.app.google/DrpxSVXXZdmPwbrh7" target="_blank" rel="noopener" class="btn-liquid btn-lg-liquid">
+        Demander une démo
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <a href="#fonctionnalites" class="btn btn-outline btn-lg">Découvrir le produit</a>
+    </div>
+
+    <div class="fx-radar-wrap" data-reveal data-reveal-delay="400">
+      <div class="fx-radar">
+        <div class="fx-hud-top"><span>SMARTLINK · RADAR SECTEUR</span><span id="fx-status">// SCAN EN COURS</span></div>
+        <canvas id="fx-radar" width="920" height="460" aria-label="Radar SMARTLINK : sourcing de profils autour de votre magasin"></canvas>
+        <div class="fx-hud-bot">
+          <span>ZONE&nbsp;: <b>20 KM</b></span>
+          <span>PROFILS DÉTECTÉS&nbsp;: <b id="fx-count">0</b></span>
+          <span>LIVRAISON&nbsp;: <b>&lt; 24 H</b></span>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<div class="readout">
-  <div class="wrap">
-    <div class="stat"><div class="k">Magasins équipés</div><div class="v">+100</div></div>
-    <div class="stat"><div class="k">Recrutements 2025</div><div class="v">+700</div></div>
-    <div class="stat"><div class="k">Satisfaction</div><div class="v">4,9<em>/5</em></div></div>
-    <div class="stat"><div class="k">Premiers profils</div><div class="v">&lt;24<em>h</em></div></div>
-  </div>
-</div>
-
-<section class="blk" id="protocole">
-  <div class="wrap">
-    <div class="head">
-      <span class="eyebrow">Protocole de chasse · SMARTLINK</span>
-      <h2>Du crédit activé au profil livré, <span class="grad-text">en moins de 24&nbsp;heures.</span></h2>
-      <p>Une séquence automatisée, supervisée par un consultant dédié. Vous activez, l'algorithme chasse, vous recevez des candidats prêts à rencontrer.</p>
+<!-- ============ MARQUEE clients (single row, éditorial) ============ -->
+<section class="marquee-section">
+  <div class="container">
+    <!-- Stat strip compact : compteur animé "+700 recrutements en 2025" -->
+    <div class="stat-strip" data-reveal>
+      <span class="stat-strip-dot" aria-hidden="true"></span>
+      <span class="stat-strip-figure"><span class="stat-strip-plus" aria-hidden="true">+</span><span class="stat-strip-num" data-count="700" data-duration="1400">0</span></span>
+      <span class="stat-strip-label">recrutements en <strong>2025</strong></span>
     </div>
+    <p class="marquee-eyebrow" data-reveal>
+      <span>Ils recrutent déjà avec Swipelink</span>
+    </p>
+  </div>
 
-    <div class="proto">
-      <div class="panel brk node"><span class="bar"></span>
-        <div class="idx">01</div>
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-        <h3>Crédit activé</h3>
-        <p>Vous précisez le poste en tension et lancez la chasse en un clic.</p>
-      </div>
-      <div class="panel brk node"><span class="bar"></span>
-        <div class="idx">02</div>
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-        <h3>Sourcing local</h3>
-        <p>Balayage des meilleurs profils dans un rayon défini autour du magasin.</p>
-      </div>
-      <div class="panel brk node"><span class="bar"></span>
-        <div class="idx">03</div>
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h13"/><path d="M3 12h9"/><path d="M3 19h13"/><path d="m17 8 3 3 4-5"/></svg></div>
-        <h3>Top profils scorés</h3>
-        <p>Tri par compatibilité&nbsp;: expérience, disponibilité, distance, prétentions.</p>
-      </div>
-      <div class="panel brk node"><span class="bar"></span>
-        <div class="idx">04</div>
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 0 1-4 4H7l-4 3V5a2 2 0 0 1 2-2h12a4 4 0 0 1 4 4z"/><path d="m8 11 3 3 5-5"/></svg></div>
-        <h3>Contact &amp; validation</h3>
-        <p>Chaque profil est contacté&nbsp;: disponibilité, préavis et engagement validés.</p>
-      </div>
-      <div class="panel brk node"><span class="bar"></span>
-        <div class="idx">05</div>
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg></div>
-        <h3>Profil transmis</h3>
-        <p>Vous recevez le candidat engagé, prêt à rencontrer. Vous décidez.</p>
-      </div>
+  <div class="marquee">
+    <div class="marquee-track">
+      <span class="marquee-logo"><img src="assets/marquee/carrefour.webp" alt="Carrefour" loading="eager" decoding="async"></span>
+      <span class="marquee-logo"><img src="assets/marquee/intermarche.webp" alt="Intermarché" loading="eager" decoding="async"></span>
+      <span class="marquee-logo"><img src="assets/marquee/monoprix.webp" alt="Monoprix" loading="eager" decoding="async"></span>
+      <span class="marquee-logo"><img src="assets/marquee/leclerc.webp" alt="Leclerc" loading="eager" decoding="async"></span>
+      <span class="marquee-logo"><img src="assets/marquee/auchan.webp" alt="Auchan" loading="eager" decoding="async"></span>
+      <span class="marquee-logo"><img src="assets/marquee/franprix.webp" alt="Franprix" loading="eager" decoding="async"></span>
+      <span class="marquee-logo"><img src="assets/marquee/darty.webp" alt="Darty" loading="eager" decoding="async"></span>
+      <span class="marquee-logo"><img src="assets/marquee/marieblachere.webp" alt="Marie Blachère" loading="eager" decoding="async"></span>
+      <span class="marquee-logo"><img src="assets/marquee/botanic.webp" alt="Botanic" loading="eager" decoding="async"></span>
+      <span class="marquee-logo"><img src="assets/marquee/blackstore.webp" alt="Black Store" loading="eager" decoding="async"></span>
+      <span class="marquee-logo"><img src="assets/marquee/mrbricolage.webp" alt="Mr.Bricolage" loading="eager" decoding="async"></span>
+      <span class="marquee-logo"><img src="assets/marquee/les-quais-du-frais.svg" alt="Les Quais du Frais" loading="eager" decoding="async"></span>
+      <span class="marquee-logo"><img src="assets/marquee/aeroport-marseille-provence.svg" alt="Aéroport Marseille Provence" loading="eager" decoding="async"></span>
+      <!-- duplicat pour boucle infinie -->
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/carrefour.webp" alt="" loading="eager" decoding="async"></span>
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/intermarche.webp" alt="" loading="eager" decoding="async"></span>
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/monoprix.webp" alt="" loading="eager" decoding="async"></span>
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/leclerc.webp" alt="" loading="eager" decoding="async"></span>
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/auchan.webp" alt="" loading="eager" decoding="async"></span>
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/franprix.webp" alt="" loading="eager" decoding="async"></span>
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/darty.webp" alt="" loading="eager" decoding="async"></span>
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/marieblachere.webp" alt="" loading="eager" decoding="async"></span>
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/botanic.webp" alt="" loading="eager" decoding="async"></span>
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/blackstore.webp" alt="" loading="eager" decoding="async"></span>
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/mrbricolage.webp" alt="" loading="eager" decoding="async"></span>
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/les-quais-du-frais.svg" alt="" loading="eager" decoding="async"></span>
+      <span class="marquee-logo" aria-hidden="true"><img src="assets/marquee/aeroport-marseille-provence.svg" alt="" loading="eager" decoding="async"></span>
     </div>
   </div>
 </section>
 
-<section class="blk" id="smartlink" style="padding-top:0">
-  <div class="wrap">
-    <div class="head">
-      <span class="eyebrow">Module SMARTLINK · Tarification</span>
-      <h2>1 crédit. Un prix unique. <span class="grad-text">Embauches illimitées.</span></h2>
+<!-- ============ FONCTIONNALITÉS ============ -->
+<section class="section" id="fonctionnalites">
+  <div class="container">
+    <div class="section-head" data-reveal>
+      <span class="eyebrow">Comment SMARTLINK fonctionne</span>
+      <h2>Sur les profils pénuriques, l'annonce ne suffit plus. <span class="gradient-text">Il faut aller les chasser.</span></h2>
+      <p>Boucher, pharmacien, directeur de magasin, chef de chantier… dès qu'il y a tension sur ces postes dans une région, les annonces classiques ne ramènent plus assez de candidatures qualifiées. SMARTLINK va alors les chercher dans notre base, les contacte directement et valide leurs infos clés avant de transmettre la candidature au magasin.</p>
     </div>
 
-    <div class="mod">
-      <div class="panel brk price">
-        <span class="tag">Abonnement SMARTLINK</span>
-        <div class="amt">599€ <em>HT / mois</em></div>
-        <p class="desc"><strong>1 crédit = 1 mois de chasse sur un poste, embauches illimitées.</strong> 4 bouchers à recruter&nbsp;? 1 seul crédit suffit.</p>
-        <ul class="feat">
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Logiciel complet inclus</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Chasse active supervisée par un consultant dédié</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Mensuel, trimestriel ou semestriel</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Sans engagement, résiliable à tout moment</li>
+    <!-- Schéma 5 étapes : du crédit activé au profil transmis -->
+    <div class="process-flow" data-reveal>
+      <span class="process-speed-badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 4 14 12 14 11 22 20 10 12 10 13 2"/></svg>
+        Du crédit au profil livré, en <strong>moins de 24h</strong>
+      </span>
+
+      <ol class="process-steps">
+
+        <!-- 01 — Crédit activé -->
+        <li class="process-step">
+          <span class="process-num">01</span>
+          <div class="process-visual is-credit">
+            <div class="credit-card">
+              <span class="credit-line"></span>
+              <span class="credit-line short"></span>
+              <span class="credit-chip"></span>
+              <span class="credit-pulse"></span>
+            </div>
+          </div>
+          <h4>Crédit activé</h4>
+          <p>Vous précisez le poste à pourvoir et activez la chasse en 1&nbsp;clic.</p>
+        </li>
+
+        <!-- 02 — Sourcing local 20km -->
+        <li class="process-step">
+          <span class="process-num">02</span>
+          <div class="process-visual is-radar">
+            <span class="radar-pulse r1"></span>
+            <span class="radar-pulse r2"></span>
+            <span class="radar-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </span>
+            <span class="radar-radius-label">20&nbsp;km</span>
+          </div>
+          <h4>Sourcing local</h4>
+          <p>SMARTLINK chasse les meilleurs profils dans un rayon défini autour de votre magasin.</p>
+        </li>
+
+        <!-- 03 — Top profils sélectionnés -->
+        <li class="process-step">
+          <span class="process-num">03</span>
+          <div class="process-visual is-cards">
+            <div class="cv-stack">
+              <div class="cv-chip">
+                <span class="cv-ava" style="background:linear-gradient(135deg,#3B82F6,#6366F1);"></span>
+                <span class="cv-bars"><i></i><i></i></span>
+                <span class="cv-pct">82%</span>
+              </div>
+              <div class="cv-chip">
+                <span class="cv-ava" style="background:linear-gradient(135deg,#A855F7,#EC4899);"></span>
+                <span class="cv-bars"><i></i><i></i></span>
+                <span class="cv-pct">88%</span>
+              </div>
+              <div class="cv-chip is-top">
+                <span class="cv-ava" style="background:linear-gradient(135deg,#F59E0B,#EC4899);"></span>
+                <span class="cv-bars"><i></i><i></i></span>
+                <span class="cv-pct is-high">94%</span>
+              </div>
+            </div>
+          </div>
+          <h4>Top profils sélectionnés</h4>
+          <p>Tri par score de compatibilité&nbsp;: expérience, disponibilité, distance, prétentions salariales.</p>
+        </li>
+
+        <!-- 04 — Contact + validation -->
+        <li class="process-step">
+          <span class="process-num">04</span>
+          <div class="process-visual is-contact">
+            <div class="chat-bubble chat-out">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <div class="chat-bubble chat-in">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+          <h4>Contact &amp; validation</h4>
+          <p>Notre équipe contacte chaque profil pour valider disponibilité, préavis et engagement.</p>
+        </li>
+
+        <!-- 05 — Profil transmis au magasin -->
+        <li class="process-step">
+          <span class="process-num">05</span>
+          <div class="process-visual is-store">
+            <div class="store-card">
+              <span class="store-pop">+1</span>
+              <span class="store-glyph">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-6h16l1 6"/><path d="M3 9v12h18V9"/><path d="M9 21V13h6v8"/><path d="M3 9h18"/></svg>
+              </span>
+              <span class="store-label">Votre magasin</span>
+            </div>
+          </div>
+          <h4>Profil transmis</h4>
+          <p>Vous recevez le candidat engagé, prêt à rencontrer. Vous décidez de la suite.</p>
+        </li>
+
+      </ol>
+    </div>
+
+    <!-- Cartes fonctionnalités -->
+    <div class="features-grid" data-stagger style="margin-top:3rem;">
+      <article class="feature-card is-third">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V5a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
+        </div>
+        <h3>Diffusion simplifiée</h3>
+        <p>Créez et multi-diffusez vos offres en quelques minutes sur les meilleurs job-boards.</p>
+      </article>
+
+      <article class="feature-card is-third">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+        </div>
+        <h3>Score de compatibilité</h3>
+        <p>Chaque candidat reçoit un score précis : expérience, disponibilité, attentes salariales.</p>
+      </article>
+
+      <article class="feature-card is-third">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
+        <h3>Sourcing intelligent</h3>
+        <p>SMARTLINK contacte uniquement les profils pertinents, au bon moment.</p>
+      </article>
+    </div>
+
+    <!-- Showcase : un consultant dédié + support 7j/7 -->
+    <article class="saas-showcase" data-reveal>
+      <div class="saas-showcase-text">
+        <span class="eyebrow">L'accompagnement</span>
+        <h3>Un consultant attitré sur <em>chaque</em> crédit <span class="gradient-text">SMARTLINK</span>.</h3>
+        <p>Vous n'êtes jamais seul face à votre recrutement. Pour chaque crédit SMARTLINK activé, un consultant dédié suit votre dossier de bout en bout&nbsp;: sourcing, qualification, transmission des profils, débrief.</p>
+        <ul class="saas-showcase-meta">
+          <li>
+            <span class="meta-ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </span>
+            Un consultant dédié par crédit
+          </li>
+          <li>
+            <span class="meta-ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </span>
+            Support disponible 7&nbsp;jours&nbsp;sur&nbsp;7
+          </li>
+          <li>
+            <span class="meta-ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Réponse garantie en moins de 1&nbsp;heure
+          </li>
         </ul>
-        <a href="#demo" class="btn btn-primary">ACTIVER UN CRÉDIT →</a>
+      </div>
+      <div class="saas-showcase-visual">
+        <img
+          src="https://cdn.prod.website-files.com/68063d6ee4f168da919e702d/68d3a6985f5cd291f8d918e1_6809255115a4b7258cf5e374_Capture%20d%27%C3%A9cran%202025-04-23%20193704.png"
+          alt="Interface du logiciel Swipelink, tableau de bord recruteur" loading="lazy" decoding="async">
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ HUNT MODE : SMARTLINK ============ -->
+<section class="section is-dark hunt-section">
+  <div class="container">
+    <div class="section-head" data-reveal>
+      <span class="eyebrow">SMARTLINK · La chasse activée</span>
+      <h2>1 crédit. Demain matin. <span class="gradient-text">Profils chassés.</span></h2>
+      <p>Vous activez SMARTLINK aujourd'hui, on chasse cette nuit, vous recevez les profils dès le lendemain. Pas de cabinet, pas d'attente.</p>
+    </div>
+
+    <!-- Comparaison "Avant / Avec SMARTLINK" -->
+    <div class="vs-grid" data-reveal>
+      <article class="vs-card vs-old">
+        <span class="vs-tag">Annonce classique</span>
+        <h3>Vous attendez.</h3>
+        <ul class="vs-list">
+          <li><span class="vs-bullet vs-cross">×</span>Diffusion d'une annonce, et on espère</li>
+          <li><span class="vs-bullet vs-cross">×</span>Candidatures aléatoires, peu qualifiées</li>
+          <li><span class="vs-bullet vs-cross">×</span>Profils sur le marché, pas ceux qui en sortent</li>
+          <li><span class="vs-bullet vs-cross">×</span>Délais imprévisibles, parfois plusieurs semaines</li>
+        </ul>
+      </article>
+
+      <div class="vs-divider" aria-hidden="true">
+        <span class="vs-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
       </div>
 
-      <div class="panel brk aside">
-        <div class="row"><span class="n">▹</span><p><b>Prix unique, quel que soit le poste</b>Boulanger, ELS ou directeur&nbsp;: un crédit = un poste, même tarif.</p></div>
-        <div class="row"><span class="n">▹</span><p><b>Volume illimité sur le poste</b>Recrutez une personne ou dix sur le même crédit, sans surcoût.</p></div>
-        <div class="row"><span class="n">▹</span><p><b>Sur mesure multi-sites</b>Plusieurs crédits par mois&nbsp;? On construit un forfait sur devis.</p></div>
+      <article class="vs-card vs-new">
+        <span class="vs-tag">Avec SMARTLINK</span>
+        <h3>On chasse <em>pour vous</em>.</h3>
+        <ul class="vs-list">
+          <li><span class="vs-bullet vs-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>Sourcing actif sur notre base de CV qualifiés</li>
+          <li><span class="vs-bullet vs-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>Profils contactés, même ceux qui ne postulent pas</li>
+          <li><span class="vs-bullet vs-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>Pré-qualifiés sur disponibilité, préavis, prétentions salariales</li>
+          <li><span class="vs-bullet vs-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>Premiers profils livrés dès le lendemain</li>
+        </ul>
+      </article>
+    </div>
+
+    <!-- Quel poste ? Grille éditoriale par secteur -->
+    <div class="hunt-roles-section" data-reveal>
+      <div class="hunt-roles-head">
+        <span class="hunt-roles-num">02</span>
+        <h3>Quel poste vous fait perdre du temps&nbsp;?</h3>
+      </div>
+      <div class="hunt-roles-grid">
+        <article class="hunt-cat">
+          <span class="hunt-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-6h16l1 6"/><path d="M3 9v12h18V9"/><path d="M9 21V13h6v8"/><path d="M3 9h18"/></svg>
+          </span>
+          <h4>Grande distribution</h4>
+          <ul>
+            <li>Directeur de magasin</li>
+            <li>Manager de rayon</li>
+            <li>Chef de secteur</li>
+            <li>Employé libre-service</li>
+            <li>Responsable caisse</li>
+          </ul>
+        </article>
+
+        <article class="hunt-cat">
+          <span class="hunt-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v6a6 6 0 0 0 12 0V2"/><path d="M6 8c0 4 0 12 6 14"/><path d="M18 8c0 4 0 12-6 14"/></svg>
+          </span>
+          <h4>Métiers de bouche</h4>
+          <ul>
+            <li>Boucher</li>
+            <li>Boulanger</li>
+            <li>Pâtissier</li>
+            <li>Poissonnier</li>
+            <li>Charcutier-traiteur</li>
+          </ul>
+        </article>
+
+        <article class="hunt-cat">
+          <span class="hunt-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18"/><path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/><path d="M5 11v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/><path d="M9 6V3"/><path d="M15 6V3"/></svg>
+          </span>
+          <h4>CHR &amp; Restauration</h4>
+          <ul>
+            <li>Chef cuisinier</li>
+            <li>Second de cuisine</li>
+            <li>Vendeur traiteur</li>
+            <li>Maître d'hôtel</li>
+            <li>Serveur</li>
+          </ul>
+        </article>
+
+        <article class="hunt-cat">
+          <span class="hunt-cat-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/><circle cx="12" cy="12" r="9"/></svg>
+          </span>
+          <h4>Pharmacie &amp; Santé</h4>
+          <ul>
+            <li>Pharmacien</li>
+            <li>Chef de rayon pharmacie</li>
+            <li>Pharmacien titulaire</li>
+            <li>Préparateur en pharmacie</li>
+            <li>Auxiliaire de pharmacie</li>
+          </ul>
+        </article>
+      </div>
+      <p class="hunt-roles-note">Et tous les autres métiers de terrain. Un crédit, un poste, des profils chassés dès le lendemain.</p>
+    </div>
+
+    <!-- Tarification simple : 1 ou 10, ELS ou directeur, même prix -->
+    <div class="pricing-rule" data-reveal>
+      <div class="pricing-rule-head">
+        <span class="hunt-roles-num">03</span>
+        <h3>Le crédit SMARTLINK, c'est un <em>prix unique</em>.</h3>
+      </div>
+      <div class="pricing-rule-grid">
+        <article class="rule-card">
+          <span class="rule-figure">1<span class="rule-or">ou</span>10</span>
+          <h4>Recrutez une personne ou dix.<br><span>Même crédit, même prix.</span></h4>
+          <p>Une fois la chasse activée sur un poste, vous embauchez autant de profils que vous voulez. Pas de surcoût au volume.</p>
+        </article>
+        <article class="rule-card">
+          <span class="rule-figure rule-figure-roles">ELS<span class="rule-or">ou</span>Dir.</span>
+          <h4>Boulanger, ELS ou directeur.<br><span>Même crédit, même prix.</span></h4>
+          <p>Pas de grille selon le niveau de responsabilité. Un crédit SMARTLINK = un poste à pourvoir, quel qu'il soit.</p>
+        </article>
+      </div>
+    </div>
+
+    <!-- Timeline 3 étapes : Aujourd'hui → Cette nuit → Demain -->
+    <div class="hunt-timeline" data-reveal>
+      <div class="hunt-step">
+        <span class="hunt-when">Aujourd'hui</span>
+        <span class="hunt-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </span>
+        <h4>Activez 1 crédit SMARTLINK</h4>
+        <p>Vous précisez le poste recherché et activez la chasse en 1 clic.</p>
+      </div>
+
+      <span class="hunt-link" aria-hidden="true"></span>
+
+      <div class="hunt-step">
+        <span class="hunt-when">Cette nuit</span>
+        <span class="hunt-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </span>
+        <h4>SMARTLINK chasse 24/7</h4>
+        <p>Notre algorithme identifie, contacte et pré-qualifie les profils pertinents.</p>
+      </div>
+
+      <span class="hunt-link" aria-hidden="true"></span>
+
+      <div class="hunt-step is-result">
+        <span class="hunt-when">Demain matin</span>
+        <span class="hunt-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        <h4>Profils chassés livrés</h4>
+        <p>Vous recevez des candidats prêts à rencontrer, scorés &gt; 92%.</p>
+      </div>
+    </div>
+
+    <!-- Punchline finale -->
+    <div class="hunt-punchline" data-reveal>
+      <h3>On n'attend plus. On <span class="gradient-text">chasse</span>.</h3>
+      <a href="contact.html" class="btn-liquid btn-lg-liquid">Activer un crédit SMARTLINK
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRICING ============ -->
+<section class="section is-dark" id="tarifs">
+  <div class="container">
+    <div class="section-head" data-reveal>
+      <span class="eyebrow">Tarifs</span>
+      <h2>Adapté aux petites comme aux grosses entreprises.</h2>
+      <p>Du magasin indépendant au réseau multi-sites&nbsp;: on construit l'offre qui colle à votre volume de recrutement.</p>
+    </div>
+
+    <div class="pricing-grid pricing-grid-2" data-stagger>
+      <div class="price-card is-featured">
+        <span class="ribbon">Le plus choisi</span>
+        <span class="plan-name">Abonnement SMARTLINK</span>
+        <div class="price">599€<small> HT/mois</small></div>
+        <p class="desc"><strong>1 crédit = 1 mois de chasse, embauches illimitées sur le poste.</strong> 4 bouchers à recruter&nbsp;? 1 seul crédit suffit.</p>
+        <hr>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Logiciel complet inclus</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Chasse active</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Consultant dédié à votre crédit</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Mensuel, trimestriel ou semestriel</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Sans engagement, résiliable à tout moment</li>
+        </ul>
+        <a href="https://calendar.app.google/DrpxSVXXZdmPwbrh7" target="_blank" rel="noopener" class="btn-liquid">Demander une démo
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+      <div class="price-card">
+        <span class="plan-name">Sur mesure</span>
+        <div class="price">Sur devis</div>
+        <p class="desc"><strong>Plusieurs crédits par mois</strong> ou des besoins multi-sites. On construit votre forfait sur la base du volume réel d'embauches dont vous avez besoin.</p>
+        <hr>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Tout SMARTLINK inclus</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Volume de crédits adapté</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Account manager dédié</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Intégration ATS native</li>
+        </ul>
+        <a href="contact.html" class="btn btn-accent">Demander un devis</a>
+      </div>
+    </div>
+
+    <!-- Mini explainer : "qu'est-ce qu'un crédit ?" -->
+    <div class="pricing-explainer" data-reveal>
+      <div class="pricing-explainer-card">
+        <div class="pricing-explainer-icon" aria-hidden="true">💡</div>
+        <div>
+          <h3>Concrètement, qu'est-ce qu'un crédit&nbsp;?</h3>
+          <p>1 crédit = <strong>1 mois de chasse sur 1 poste</strong>. Vous nous confiez votre besoin (ex&nbsp;: <em>4 bouchers à Lyon 3e</em>), on chasse pendant 30 jours et vous embauchez autant que vous voulez sur ce poste, sans surcoût.</p>
+          <p style="margin-top:.5rem;"><strong>Le mois suivant&nbsp;:</strong> nouveau crédit. Même poste si pas terminé, ou nouveau besoin (caissier, boulanger, manager rayon…).</p>
+          <p style="margin-top:.5rem;"><strong>Mensuel, trimestriel ou semestriel&nbsp;:</strong> on s'adapte à votre rythme de recrutement.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ NOS PARTENAIRES ============ -->
+<section class="section partners-section">
+  <div class="container">
+    <div class="section-head" data-reveal>
+      <span class="eyebrow">Ils nous accompagnent</span>
+      <h2>Nos partenaires institutionnels.</h2>
+      <p>Soutenu par les acteurs publics et privés qui font avancer l'innovation française.</p>
+    </div>
+
+    <ul class="partners-grid" data-stagger>
+      <li class="partner-cell" title="La French Tech">
+        <img src="assets/partners/french-tech.webp" alt="La French Tech" loading="lazy" decoding="async">
+      </li>
+      <li class="partner-cell" title="Bpifrance">
+        <img src="assets/partners/bpifrance.webp" alt="Bpifrance" loading="lazy" decoding="async">
+      </li>
+      <li class="partner-cell" title="BNP Paribas">
+        <img src="assets/partners/bnp.webp" alt="BNP Paribas" loading="lazy" decoding="async">
+      </li>
+      <li class="partner-cell" title="Orange">
+        <img src="assets/partners/orange.webp" alt="Orange" loading="lazy" decoding="async">
+      </li>
+      <li class="partner-cell" title="Twilio">
+        <img src="assets/partners/twilio.webp" alt="Twilio" loading="lazy" decoding="async">
+      </li>
+      <li class="partner-cell" title="Supabase">
+        <img src="assets/partners/supabase.webp" alt="Supabase" loading="lazy" decoding="async">
+      </li>
+      <li class="partner-cell" title="France Travail">
+        <img src="assets/partners/france-travail.webp" alt="France Travail" loading="lazy" decoding="async">
+      </li>
+      <li class="partner-cell" title="Ville de Paris">
+        <img src="assets/partners/ville-de-paris.webp" alt="Ville de Paris" loading="lazy" decoding="async">
+      </li>
+      <li class="partner-cell" title="PIE — Paris Initiative Entreprise">
+        <img src="assets/partners/pie.webp" alt="Paris Initiative Entreprise" loading="lazy" decoding="async">
+      </li>
+      <li class="partner-cell" title="Meteojob">
+        <img src="assets/partners/meteojob.webp" alt="Meteojob" loading="lazy" decoding="async">
+      </li>
+      <li class="partner-cell" title="La Ruche">
+        <span class="partner-logo partner-laruche">la R<em>uche</em></span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ API & INTÉGRATIONS ============ -->
+<section class="section api-section" id="api">
+  <div class="container">
+    <div class="section-head" data-reveal>
+      <span class="eyebrow">API &amp; intégrations</span>
+      <h2>Branché à votre stack RH.</h2>
+      <p>Swipelink se plug en quelques minutes à vos outils existants. Pas de double saisie, pas de friction.</p>
+    </div>
+
+    <div class="api-grid" data-stagger>
+
+      <article class="api-card">
+        <div class="api-card-head">
+          <span class="api-logo" style="background:linear-gradient(135deg,#1E40AF,#2563EB);">DR</span>
+          <h3>Digital Recruiter</h3>
+        </div>
+        <p>Synchronisation native des offres, candidatures et statuts avec votre ATS.</p>
+        <span class="api-status is-live">Disponible</span>
+      </article>
+
+      <article class="api-card">
+        <div class="api-card-head">
+          <span class="api-logo" style="background:linear-gradient(135deg,#25D366,#128C7E);">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 0 0 1.51 5.26l-.999 3.648 3.978-1.607zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479c0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.414z"/></svg>
+          </span>
+          <h3>WhatsApp</h3>
+        </div>
+        <p>Contact des candidats directement sur WhatsApp Business, là où ils sont actifs.</p>
+        <span class="api-status is-soon">Bientôt</span>
+      </article>
+
+      <article class="api-card">
+        <div class="api-card-head">
+          <span class="api-logo" style="background:linear-gradient(135deg,#A855F7,#7C3AED);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </span>
+          <h3>API publique</h3>
+        </div>
+        <p>Branchez Swipelink sur n'importe quel ATS ou outil interne via une clé API simple.</p>
+        <span class="api-status is-live">Disponible</span>
+      </article>
+
+      <article class="api-card">
+        <div class="api-card-head">
+          <span class="api-logo" style="background:linear-gradient(135deg,#4A154B,#611f69);">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+          </span>
+          <h3>Slack &amp; Teams</h3>
+        </div>
+        <p>Recevez les nouvelles candidatures qualifiées directement dans vos canaux d'équipe.</p>
+        <span class="api-status is-soon">Bientôt</span>
+      </article>
+
+      <article class="api-card">
+        <div class="api-card-head">
+          <span class="api-logo" style="background:linear-gradient(135deg,#EA4335,#FBBC05);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </span>
+          <h3>Google Calendar</h3>
+        </div>
+        <p>Création automatique des entretiens dans l'agenda, avec rappels candidat.</p>
+        <span class="api-status is-live">Disponible</span>
+      </article>
+
+      <article class="api-card">
+        <div class="api-card-head">
+          <span class="api-logo" style="background:linear-gradient(135deg,#EC4899,#F59E0B);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </span>
+          <h3>Webhooks</h3>
+        </div>
+        <p>Déclenchez n'importe quelle action dans vos outils dès qu'un candidat est qualifié.</p>
+        <span class="api-status is-live">Disponible</span>
+      </article>
+
+    </div>
+
+    <div class="api-more" data-reveal>
+      <strong>Et beaucoup d'autres en cours d'intégration.</strong> Votre outil n'est pas dans la liste ? On le branche en moins de 48h grâce à notre API publique.
+    </div>
+  </div>
+</section>
+
+<!-- ============ BLOG ============ -->
+<section class="section">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:3rem;flex-wrap:wrap;gap:1rem;" data-reveal>
+      <div>
+        <span class="eyebrow">Blog</span>
+        <h2 style="margin-bottom:0;">À lire en ce moment</h2>
+      </div>
+      <a href="https://blog.swipelink.fr/blog" class="btn btn-outline btn-arrow">Voir tous les articles
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+
+    <div class="blog-grid" data-stagger>
+      <a href="https://blog.swipelink.fr/blog/exemple-doffre-demploi-attractive-pour-les-metiers-de-bouches" class="blog-card">
+        <div class="blog-card-image"><img src="https://cdn.prod.website-files.com/68063d6ee4f168da919e70c4/69b273c2208efa44623612d3_Job-Offer%20(1).jpg" alt="Exemple d’offre d’emploi attractive pour les métiers de bouches" loading="lazy" decoding="async"></div>
+        <div class="blog-card-body">
+          <span class="blog-card-tag">Recrutement</span>
+          <h3>Exemple d’offre d’emploi attractive pour les métiers de bouches</h3>
+          <p>Exemple d’offre d’emploi attractive pour les métiers de bouche : modèles prêts à copier (boucher, boulanger, pâtissier,…</p>
+          <span class="blog-card-meta">5 min de lecture</span>
+        </div>
+      </a>
+      <a href="https://blog.swipelink.fr/blog/cabinet-de-recrutement-metiers-de-bouche" class="blog-card">
+        <div class="blog-card-image"><img src="https://cdn.prod.website-files.com/68063d6ee4f168da919e70c4/6978f98820eeb0471e169e94_tiny%20png%20(1).webp" alt="Cabinet de recrutement métiers de bouche" loading="lazy" decoding="async"></div>
+        <div class="blog-card-body">
+          <span class="blog-card-tag">Cabinet</span>
+          <h3>Cabinet de recrutement métiers de bouche</h3>
+          <p>Attirer les meilleurs profils pour recruter les métiers de bouche avec un recherche ciblée en fonction des besoins…</p>
+          <span class="blog-card-meta">5 min de lecture</span>
+        </div>
+      </a>
+      <a href="https://blog.swipelink.fr/blog/les-meilleurs-sites-pour-recruter-les-metiers-de-bouche" class="blog-card">
+        <div class="blog-card-image"><img src="https://cdn.prod.website-files.com/68063d6ee4f168da919e70c4/696e5eadbd6cc42db6e62750_1620225044-boucherie%20(1).avif" alt="Les meilleurs sites pour recruter les métiers de bouche" loading="lazy" decoding="async"></div>
+        <div class="blog-card-body">
+          <span class="blog-card-tag">Sourcing</span>
+          <h3>Les meilleurs sites pour recruter les métiers de bouche</h3>
+          <p>Quels sont les meilleurs sites pour recruter dans les métiers de bouche ? Découvrez les job boards généralistes et…</p>
+          <span class="blog-card-meta">4 min de lecture</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div class="cta-banner" data-reveal>
+      <h2>Prêt à recruter mieux, plus vite ?</h2>
+      <p>15 minutes de démo suffisent à voir comment SMARTLINK trouve vos prochains talents.</p>
+      <div class="hero-cta">
+        <a href="https://calendar.app.google/DrpxSVXXZdmPwbrh7" target="_blank" rel="noopener" class="btn-liquid btn-lg-liquid">Demander une démo
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a href="https://app.swipelink.fr/recruiter/auth" class="btn btn-light btn-lg">J'ai déjà un compte</a>
       </div>
     </div>
   </div>
 </section>
 
-<section class="wrap" id="demo">
-  <div class="final panel">
-    <span class="eyebrow">Démonstration · 15 minutes</span>
-    <h2 style="margin-top:.8rem">On n'attend plus. <span class="grad-text">On chasse.</span></h2>
-    <p>15 minutes pour évaluer si Swipelink répond à vos besoins de recrutement. Un échange concis, une démonstration sur un poste réel, une recommandation adaptée.</p>
-    <div class="cta-row">
-      <a href="#" class="btn btn-primary">RÉSERVER UNE DÉMONSTRATION →</a>
-      <a href="#" class="btn btn-ghost">NOUS ÉCRIRE</a>
-    </div>
-  </div>
-</section>
+</main>
 
-<footer>
-  <div class="wrap">
-    <div class="logo" style="color:var(--muted)"><span class="dot"></span>SWIPELINK © 2026</div>
-    <div>CHASSE DE TALENTS AUTOMATISÉE · GRANDE DISTRIBUTION · CHR · RETAIL</div>
-    <div>CONFORME RGPD · DONNÉES TRAITÉES EN EUROPE</div>
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>Recrutez mieux, plus vite, plus simplement.</h4>
+        <p style="color:rgba(255,255,255,.5);font-size:.92rem;max-width:340px;">L'alternative digitale aux cabinets de recrutement, pensée pour les métiers de terrain.</p>
+        <div class="footer-social">
+          <a href="https://fr.linkedin.com/company/swipelink" aria-label="LinkedIn"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5zm2 6h2.5v9H7zm1.25-3a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5zM12 9h2.4v1.3c.5-.8 1.5-1.5 2.85-1.5 2.05 0 3.25 1.35 3.25 3.7V18H18v-4.8c0-1.15-.45-1.95-1.5-1.95s-1.65.7-1.65 1.95V18H12V9z"/></svg></a>
+          <a href="https://www.instagram.com/swipelink.fr/" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 3H8C5.24 3 3 5.24 3 8v8c0 2.76 2.24 5 5 5h8c2.76 0 5-2.24 5-5V8c0-2.76-2.24-5-5-5zm3.25 13c0 1.79-1.46 3.25-3.25 3.25H8c-1.79 0-3.25-1.46-3.25-3.25V8c0-1.79 1.46-3.25 3.25-3.25h8c1.79 0 3.25 1.46 3.25 3.25v8zM12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm0 7.25A2.75 2.75 0 1 1 12 9a2.75 2.75 0 0 1 0 5.75zM16.75 6.25a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Produit</h5>
+        <a href="index.html">Accueil</a>
+        <a href="a-propos.html">À propos</a>
+        <a href="tarifs.html">Tarifs</a>
+        <a href="https://blog.swipelink.fr/blog">Blog</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <a href="mailto:contact@swipelink.fr">contact@swipelink.fr</a>
+<span style="display:flex;align-items:center;gap:.45rem;color:rgba(255,255,255,.7);font-size:.85rem;padding:.35rem 0 0;font-weight:500;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 2"/></svg>Réponse en moins d'une heure</span>
+        <a href="https://app.swipelink.fr/recruiter/auth">Espace recruteur</a>
+      </div>
+    </div>
+    <div class="footer-compliance">
+      <div class="compliance-badge">
+        <span class="compliance-icon flag-eu" aria-hidden="true">
+          <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><circle cx="18" cy="18" r="18" fill="#003399"/><g fill="#FFCC00"><circle cx="18" cy="6.5" r="1.4"/><circle cx="24.4" cy="8.2" r="1.4"/><circle cx="29.5" cy="13.1" r="1.4"/><circle cx="29.5" cy="22.9" r="1.4"/><circle cx="24.4" cy="27.8" r="1.4"/><circle cx="18" cy="29.5" r="1.4"/><circle cx="11.6" cy="27.8" r="1.4"/><circle cx="6.5" cy="22.9" r="1.4"/><circle cx="6.5" cy="13.1" r="1.4"/><circle cx="11.6" cy="8.2" r="1.4"/><circle cx="6.5" cy="18" r="1.4"/><circle cx="29.5" cy="18" r="1.4"/></g></svg>
+        </span>
+        <div class="compliance-text">
+          <strong>Conforme RGPD</strong>
+          <span>Données traitées en Europe</span>
+        </div>
+      </div>
+
+      <div class="compliance-badge">
+        <span class="compliance-icon flag-fr" aria-hidden="true"><svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="12" height="36" fill="#002395"/><rect x="12" y="0" width="12" height="36" fill="#FFFFFF"/><rect x="24" y="0" width="12" height="36" fill="#ED2939"/></svg></span>
+        <div class="compliance-text">
+          <strong>Hébergement français</strong>
+          <span>Serveurs OVHcloud, Roubaix</span>
+        </div>
+      </div>
+
+      <div class="compliance-badge">
+        <span class="compliance-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <div class="compliance-text">
+          <strong>SSL/TLS chiffré</strong>
+          <span>Bout-en-bout en transit</span>
+        </div>
+      </div>
+
+      <div class="compliance-badge">
+        <span class="compliance-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </span>
+        <div class="compliance-text">
+          <strong>Support &lt; 1h</strong>
+          <span>En français, par humains</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2024 Swipelink · Tous droits réservés</span>
+      <div>
+        <a href="#">Confidentialité</a>
+        <a href="#">Mentions légales</a>
+        <a href="#">CGV</a>
+      </div>
+    </div>
   </div>
 </footer>
 
+
+<!-- ============ COOKIE POPUP RGPD ============ -->
+<div class="cookie-popup" id="cookiePopup" role="dialog" aria-label="Préférences cookies" hidden>
+  <div class="cookie-card">
+    <div class="cookie-icon" aria-hidden="true">🍪</div>
+    <div class="cookie-text">
+      <h3>Salut, on grignote rien&nbsp;!</h3>
+      <p>Promis, on utilise les cookies juste pour voir ce qui plaît sur le site. Pas de pub, pas de tracking, c'est tout. Tu valides&nbsp;?</p>
+    </div>
+    <div class="cookie-actions">
+      <button type="button" class="cookie-btn cookie-btn-decline" data-cookie-action="decline">Non merci</button>
+      <button type="button" class="cookie-btn cookie-btn-accept" data-cookie-action="accept">OK pour moi</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/script.js" defer></script>
+<!-- ===== FUTURISTIC HERO RADAR — SMARTLINK sector scan story (design only) ===== -->
 <script>
 (function(){
-  var c=document.getElementById('radar');if(!c)return;var x=c.getContext('2d');
+  var c=document.getElementById('fx-radar'); if(!c) return;
+  var ctx=c.getContext('2d'); var W=c.width,H=c.height;
+  var cx=W/2, cy=H-46, R=Math.min(cx-10, H-70);
+  var statusEl=document.getElementById('fx-status'), countEl=document.getElementById('fx-count');
   var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var W=c.width,H=c.height,cx=W/2,cy=H/2,R=Math.min(cx,cy)-14;
-  // targets (blips)
-  var blips=[];for(var i=0;i<9;i++){var a=Math.random()*Math.PI*2,r=Math.pow(Math.random(),.6)*R*.92;
-    blips.push({a:a,r:r,x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r,ph:Math.random()*Math.PI*2,hi:Math.random()<.3});}
-  function ring(rr){x.beginPath();x.arc(cx,cy,rr,0,Math.PI*2);x.strokeStyle='rgba(120,150,210,.16)';x.lineWidth=1;x.stroke();}
-  function draw(t){
-    x.clearRect(0,0,W,H);
-    // grid rings + cross
-    ring(R);ring(R*.66);ring(R*.33);
-    x.strokeStyle='rgba(120,150,210,.12)';x.lineWidth=1;
-    x.beginPath();x.moveTo(cx-R,cy);x.lineTo(cx+R,cy);x.moveTo(cx,cy-R);x.lineTo(cx,cy+R);x.stroke();
-    // diagonal ticks
-    for(var k=0;k<24;k++){var ang=k/24*Math.PI*2;x.beginPath();x.moveTo(cx+Math.cos(ang)*(R-6),cy+Math.sin(ang)*(R-6));x.lineTo(cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);x.stroke();}
-    var sweep=reduce?-0.9:(t/1000*0.9)%(Math.PI*2);
-    // sweep gradient wedge
-    if(!reduce){
-      var g=x.createConicGradient?null:null;
-      for(var s=0;s<40;s++){var frac=s/40,aa=sweep-frac*0.55;
-        x.beginPath();x.moveTo(cx,cy);
-        x.arc(cx,cy,R,aa-0.02,aa+0.02);x.closePath();
-        x.fillStyle='rgba(57,227,255,'+(0.18*(1-frac))+')';x.fill();}
-      // leading line
-      x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(sweep)*R,cy+Math.sin(sweep)*R);
-      x.strokeStyle='rgba(57,227,255,.85)';x.lineWidth=2;x.stroke();
-    }
-    // blips: light up as the sweep passes
-    blips.forEach(function(b){
-      var da=Math.abs(((b.a-sweep)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI);
-      var near=reduce?0.6:Math.max(0,1-Math.min(Math.abs(((b.a-sweep+Math.PI*2)%(Math.PI*2))),0.9)/0.9);
-      var pulse=(Math.sin(t/500+b.ph)+1)/2;
-      var alpha=reduce?0.8:(0.25+near*0.75);
-      var col=b.hi?'245,166,35':'57,227,255';
-      x.beginPath();x.arc(b.x,b.y,3+near*3,0,Math.PI*2);
-      x.fillStyle='rgba('+col+','+alpha+')';x.fill();
-      if(near>0.5||reduce){x.beginPath();x.arc(b.x,b.y,7+pulse*5,0,Math.PI*2);x.strokeStyle='rgba('+col+','+(alpha*0.4)+')';x.lineWidth=1;x.stroke();}
-    });
-    // center
-    x.beginPath();x.arc(cx,cy,3,0,Math.PI*2);x.fillStyle='rgba(231,236,248,.9)';x.fill();
-    if(!reduce)requestAnimationFrame(draw);
+  var blips=[];
+  for(var i=0;i<11;i++){var a=Math.PI+0.18+Math.random()*(Math.PI-0.36);var r=(0.30+Math.random()*0.62)*R;
+    blips.push({a:a,r:r,x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r,q:false,ph:Math.random()*6.28});}
+  var order=blips.map(function(b,i){return i;}).sort(function(p,q){return blips[p].r-blips[q].r;});
+  order.slice(1,5).forEach(function(k){blips[k].q=true;});
+  var hero=order[1];
+  var T=8600;
+  function ring(rr){ctx.beginPath();ctx.arc(cx,cy,rr,Math.PI,2*Math.PI);ctx.strokeStyle='rgba(37,99,235,.16)';ctx.lineWidth=1;ctx.stroke();}
+  function store(){
+    ctx.save();
+    var g=ctx.createRadialGradient(cx,cy,2,cx,cy,42);g.addColorStop(0,'rgba(37,99,235,.35)');g.addColorStop(1,'rgba(37,99,235,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,42,0,6.283);ctx.fill();
+    ctx.translate(cx,cy);ctx.fillStyle='#2563EB';ctx.lineJoin='round';
+    ctx.beginPath();ctx.moveTo(-16,-4);ctx.lineTo(0,-16);ctx.lineTo(16,-4);ctx.closePath();ctx.fill();
+    ctx.fillRect(-13,-4,26,18);
+    ctx.fillStyle='#fff';ctx.fillRect(-3,4,6,10);
+    ctx.restore();
   }
-  if(reduce)draw(0);else requestAnimationFrame(draw);
+  function frame(now){
+    var t=reduce?7200:(now%T);
+    ctx.clearRect(0,0,W,H);
+    ring(R);ring(R*0.66);ring(R*0.33);
+    ctx.strokeStyle='rgba(37,99,235,.11)';ctx.lineWidth=1;
+    for(var k=0;k<=8;k++){var ang=Math.PI+k/8*Math.PI;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);ctx.stroke();}
+    var sweep=Math.PI + ((now/1600)%1)*Math.PI;
+    if(!reduce){
+      for(var s=0;s<26;s++){var f=s/26;var aa=sweep-f*0.5;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,aa-0.02,aa+0.02);ctx.closePath();ctx.fillStyle='rgba(37,99,235,'+(0.13*(1-f))+')';ctx.fill();}
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(sweep)*R,cy+Math.sin(sweep)*R);ctx.strokeStyle='rgba(37,99,235,.55)';ctx.lineWidth=1.5;ctx.stroke();
+    }
+    var phase = t<3200?0 : t<4700?1 : t<6200?2 : 3;
+    var detected=0;
+    blips.forEach(function(b){
+      var revealT=(b.a-Math.PI)/Math.PI*3000;
+      var seen=reduce || t>revealT+120;
+      if(seen) detected++;
+      var col=seen?'#2563EB':'rgba(100,116,139,.30)', rad=3;
+      if(seen&&b.q&&(phase>=1||reduce)){col='#10B981';rad=3.4;}
+      ctx.beginPath();ctx.arc(b.x,b.y,rad,0,6.283);ctx.fillStyle=col;ctx.fill();
+      if(seen&&b.q&&(phase>=1||reduce)){var pu=(Math.sin(now/380+b.ph)+1)/2;ctx.beginPath();ctx.arc(b.x,b.y,6+pu*4,0,6.283);ctx.strokeStyle='rgba(16,185,129,.45)';ctx.lineWidth=1;ctx.stroke();}
+    });
+    var hb=blips[hero];
+    if(phase>=2||reduce){
+      var bx=hb.x,by=hb.y,bs=11;ctx.strokeStyle='#7C3AED';ctx.lineWidth=1.7;
+      [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(function(d){ctx.beginPath();ctx.moveTo(bx+d[0]*bs,by+d[1]*bs-d[1]*5);ctx.lineTo(bx+d[0]*bs,by+d[1]*bs);ctx.lineTo(bx+d[0]*bs-d[0]*5,by+d[1]*bs);ctx.stroke();});
+    }
+    if(phase===3&&!reduce){
+      var p=Math.min(1,(t-6200)/1700);var ex=hb.x+(cx-hb.x)*p, ey=hb.y+(cy-hb.y)*p;
+      ctx.beginPath();ctx.moveTo(hb.x,hb.y);ctx.lineTo(ex,ey);ctx.strokeStyle='rgba(245,158,11,.5)';ctx.lineWidth=2;ctx.stroke();
+      ctx.beginPath();ctx.arc(ex,ey,4.5,0,6.283);ctx.fillStyle='#F59E0B';ctx.fill();
+      if(p>=1){var bp=(now/560)%1;ctx.beginPath();ctx.arc(cx,cy,10+bp*24,0,6.283);ctx.strokeStyle='rgba(245,158,11,'+(0.6*(1-bp))+')';ctx.lineWidth=2;ctx.stroke();}
+    }
+    store();
+    if(countEl) countEl.textContent=reduce?String(blips.length):String(detected);
+    if(statusEl){statusEl.textContent = reduce?'// LIVRÉ AU MAGASIN' : phase===0?'// SCAN EN COURS' : phase===1?'// PROFILS QUALIFIÉS' : phase===2?'// CONTACT ÉTABLI' : (t<7900?'// FONCE AU MAGASIN':'// LIVRÉ AU MAGASIN');}
+    if(!reduce) requestAnimationFrame(frame);
+  }
+  if(reduce) frame(7200); else requestAnimationFrame(frame);
 })();
 </script>
-
 </body>
 </html>
