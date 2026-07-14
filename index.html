@@ -21,7 +21,7 @@
     --fx-grad:linear-gradient(100deg,#2563EB,#7C3AED 42%,#EC4899 70%,#F59E0B);
   }
   /* --- light futuristic ground: fixed grid + soft glows --- */
-  body{background-color:#ffffff !important;background-image:none !important}
+  body{background-color:#EEF3FF !important;background-image:none !important}
   /* NOTE: on garde tous les composants d'origine (cartes, pastilles, boutons) et
      leurs interactions au survol — la couche futuriste reste NON destructive :
      uniquement fond lumineux + halos + radar. */
@@ -33,16 +33,16 @@
   /* ===== HERO RADAR (SMARTLINK · sector scan → contact → livraison magasin) ===== */
   .fx-radar-wrap{position:relative;margin:2.8rem auto 0;max-width:860px;width:100%}
   .fx-radar-wrap::before{content:"";position:absolute;inset:-26px;border-radius:46px;pointer-events:none;z-index:0;
-    background:radial-gradient(closest-side,rgba(37,99,235,.36),rgba(56,189,248,.20) 55%,rgba(139,92,246,.12) 72%,transparent 82%);filter:blur(30px)}
+    background:radial-gradient(closest-side,rgba(139,92,246,.40),rgba(168,85,247,.22) 55%,rgba(124,58,237,.12) 74%,transparent 84%);filter:blur(30px)}
   .fx-radar{position:relative;z-index:1;padding:16px 18px 14px;border-radius:22px;overflow:hidden;
-    border:1.6px solid transparent;
+    border:1.7px solid transparent;
     background:
-      radial-gradient(130% 95% at 50% -12%,#111d42 0%,#0b1128 52%,#080b1b 100%) padding-box,
-      linear-gradient(135deg,#2563EB 0%,#38BDF8 46%,#8B5CF6 100%) border-box;
-    box-shadow:0 46px 100px -50px rgba(37,99,235,.85),0 10px 30px -20px rgba(2,10,40,.5),inset 0 1px 0 rgba(255,255,255,.08)}
+      radial-gradient(130% 95% at 50% -12%,#161638 0%,#0e0e26 52%,#09091c 100%) padding-box,
+      linear-gradient(135deg,#7C3AED 0%,#A855F7 48%,#C084FC 100%) border-box;
+    box-shadow:0 46px 100px -50px rgba(124,58,237,.85),0 10px 30px -20px rgba(10,6,30,.5),inset 0 1px 0 rgba(255,255,255,.08)}
   .fx-radar::before,.fx-radar::after{content:"";position:absolute;width:16px;height:16px;pointer-events:none;z-index:2}
-  .fx-radar::before{top:11px;left:11px;border-top:1.5px solid rgba(125,175,255,.55);border-left:1.5px solid rgba(125,175,255,.55)}
-  .fx-radar::after{bottom:11px;right:11px;border-bottom:1.5px solid rgba(125,175,255,.55);border-right:1.5px solid rgba(125,175,255,.55)}
+  .fx-radar::before{top:11px;left:11px;border-top:1.5px solid rgba(190,150,255,.6);border-left:1.5px solid rgba(190,150,255,.6)}
+  .fx-radar::after{bottom:11px;right:11px;border-bottom:1.5px solid rgba(190,150,255,.6);border-right:1.5px solid rgba(190,150,255,.6)}
   .fx-hud-top,.fx-hud-bot{position:relative;z-index:2;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;
     font-family:var(--fx-mono);font-size:.66rem;letter-spacing:.14em;color:#8098cf;text-transform:uppercase}
   .fx-hud-bot{margin-top:4px}
@@ -212,11 +212,11 @@
 
     <div class="fx-radar-wrap" data-reveal data-reveal-delay="400">
       <div class="fx-radar">
-        <div class="fx-hud-top"><span>SMARTLINK · RADAR SECTEUR</span><span id="fx-status">// SCAN EN COURS</span></div>
+        <div class="fx-hud-top"><span><b id="fx-count">150</b>&nbsp;profils localisés · rayon 30 km</span><span id="fx-status">// SCAN EN COURS</span></div>
         <canvas id="fx-radar" width="920" height="460" aria-label="Radar SMARTLINK : sourcing de profils autour de votre magasin"></canvas>
         <div class="fx-hud-bot">
-          <span>ZONE&nbsp;: <b>20 KM</b></span>
-          <span>PROFILS DÉTECTÉS&nbsp;: <b id="fx-count">0</b></span>
+          <span>SMARTLINK</span>
+          <span>SCAN&nbsp;: <b>ACTIF</b></span>
           <span>LIVRAISON&nbsp;: <b>&lt; 24 H</b></span>
         </div>
       </div>
@@ -970,8 +970,10 @@
   var W,H,cx,cy,R,blips=[],QUAL=[];
   function rand(){return Math.random();}
   function seed(){
-    blips=[];
-    for(var i=0;i<16;i++){var a=Math.PI+0.14+rand()*(Math.PI-0.28);var rr=(0.26+rand()*0.68)*R;
+    blips=[]; var N=14;
+    for(var i=0;i<N;i++){var frac=(i+0.5)/N;
+      var a=Math.PI+0.12+frac*(Math.PI-0.24)+(rand()-0.5)*0.10;
+      var rr=(0.36+(i%3)*0.19+rand()*0.10)*R; if(rr>R*0.95)rr=R*0.95;
       blips.push({a:a,r:rr,x:cx+Math.cos(a)*rr,y:cy+Math.sin(a)*rr,ph:rand()*6.28,q:(i%2===0)});}
     QUAL=blips.map(function(b,i){return i;}).filter(function(i){return blips[i].q;});
   }
@@ -1012,7 +1014,7 @@
     ctx.strokeStyle='rgba(96,176,255,.08)';ctx.lineWidth=1;
     for(var k=0;k<=8;k++){var ang=Math.PI+k/8*Math.PI;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);ctx.stroke();}
     ctx.fillStyle='rgba(128,184,255,.55)';ctx.font='600 9px ui-monospace,monospace';ctx.textAlign='center';
-    ctx.fillText('20 KM',cx,cy-R+13);ctx.fillText('10 KM',cx,cy-R*0.66+13);
+    ctx.fillText('30 KM',cx,cy-R+13);ctx.fillText('15 KM',cx,cy-R*0.66+13);
     var sweep=Math.PI+((now/2100)%1)*Math.PI;
     if(!reduce){
       for(var s=0;s<34;s++){var f=s/34,aa=sweep-f*0.58;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,aa-0.02,aa+0.02);ctx.closePath();ctx.fillStyle='rgba(68,200,255,'+(0.16*(1-f))+')';ctx.fill();}
@@ -1040,7 +1042,7 @@
       }
     });
     drawStore(now);
-    if(countEl) countEl.textContent=String(blips.length);
+    if(countEl){var nb=148+Math.round((Math.sin(now/5200)+1)*4);countEl.textContent=String(nb);}
     if(statusEl){var poste=POSTES[reduce?0:Math.floor(now/1700)%POSTES.length];statusEl.textContent='// CIBLE : '+poste.toUpperCase();}
     if(!reduce) requestAnimationFrame(frame);
   }
