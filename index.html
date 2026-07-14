@@ -21,14 +21,7 @@
     --fx-grad:linear-gradient(100deg,#2563EB,#7C3AED 42%,#EC4899 70%,#F59E0B);
   }
   /* --- light futuristic ground: fixed grid + soft glows --- */
-  body{
-    background-color:#F6F9FF !important;
-    background-image:
-      radial-gradient(1400px 1100px at 92% -30%,rgba(37,99,235,.11),rgba(37,99,235,0) 72%),
-      radial-gradient(1200px 980px at -14% 2%,rgba(124,58,237,.09),rgba(124,58,237,0) 72%),
-      radial-gradient(1300px 1050px at 52% 130%,rgba(236,72,153,.06),rgba(236,72,153,0) 72%) !important;
-    background-attachment:fixed !important;
-  }
+  body{background-color:#ffffff !important;background-image:none !important}
   /* NOTE: on garde tous les composants d'origine (cartes, pastilles, boutons) et
      leurs interactions au survol — la couche futuriste reste NON destructive :
      uniquement fond lumineux + halos + radar. */
@@ -38,11 +31,15 @@
     background:radial-gradient(900px 520px at 84% -12%,rgba(76,134,255,.18),transparent 66%),radial-gradient(720px 500px at 6% 112%,rgba(168,85,247,.13),transparent 66%)}
   .section.is-dark>*{position:relative;z-index:1}
   /* ===== HERO RADAR (SMARTLINK · sector scan → contact → livraison magasin) ===== */
-  .fx-radar-wrap{margin:2.8rem auto 0;max-width:860px;width:100%}
-  .fx-radar{position:relative;padding:16px 18px 14px;border-radius:22px;overflow:hidden;
-    background:radial-gradient(130% 95% at 50% -12%,#111d42 0%,#0b1128 52%,#080b1b 100%);
-    border:1px solid rgba(96,134,224,.30);
-    box-shadow:0 46px 104px -52px rgba(24,54,150,.9),0 12px 34px -22px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)}
+  .fx-radar-wrap{position:relative;margin:2.8rem auto 0;max-width:860px;width:100%}
+  .fx-radar-wrap::before{content:"";position:absolute;inset:-26px;border-radius:46px;pointer-events:none;z-index:0;
+    background:radial-gradient(closest-side,rgba(37,99,235,.36),rgba(56,189,248,.20) 55%,rgba(139,92,246,.12) 72%,transparent 82%);filter:blur(30px)}
+  .fx-radar{position:relative;z-index:1;padding:16px 18px 14px;border-radius:22px;overflow:hidden;
+    border:1.6px solid transparent;
+    background:
+      radial-gradient(130% 95% at 50% -12%,#111d42 0%,#0b1128 52%,#080b1b 100%) padding-box,
+      linear-gradient(135deg,#2563EB 0%,#38BDF8 46%,#8B5CF6 100%) border-box;
+    box-shadow:0 46px 100px -50px rgba(37,99,235,.85),0 10px 30px -20px rgba(2,10,40,.5),inset 0 1px 0 rgba(255,255,255,.08)}
   .fx-radar::before,.fx-radar::after{content:"";position:absolute;width:16px;height:16px;pointer-events:none;z-index:2}
   .fx-radar::before{top:11px;left:11px;border-top:1.5px solid rgba(125,175,255,.55);border-left:1.5px solid rgba(125,175,255,.55)}
   .fx-radar::after{bottom:11px;right:11px;border-bottom:1.5px solid rgba(125,175,255,.55);border-right:1.5px solid rgba(125,175,255,.55)}
