@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Swipelink — Console de chasse (concept futuriste)</title>
+<style>
+  :root{
+    --bg:#06080F; --bg2:#0A0F1C; --panel:rgba(16,23,42,.55); --panel2:rgba(11,17,32,.8);
+    --line:rgba(120,140,190,.14); --line2:rgba(120,140,190,.30);
+    --text:#E7ECF8; --muted:#8C99B6; --dim:#5A6784;
+    --blue:#4C86FF; --cyan:#39E3FF; --violet:#8B5CF6; --magenta:#EC4899; --amber:#F5A623; --green:#22E0A1;
+    --grad:linear-gradient(100deg,#5B8CFF 0%,#8B5CF6 38%,#EC4899 68%,#F5A623 100%);
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:"Inter var",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --maxw:1200px;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  h1,h2,h3{margin:0;letter-spacing:-.03em;line-height:1.02;font-weight:800;text-wrap:balance}
+  p{margin:0}
+  ::selection{background:rgba(139,92,246,.4)}
+
+  /* ---- ambient background ---- */
+  .field{position:fixed;inset:0;z-index:-2;background:
+    radial-gradient(900px 600px at 78% -5%,rgba(76,134,255,.20),transparent 60%),
+    radial-gradient(800px 620px at 8% 12%,rgba(139,92,246,.16),transparent 60%),
+    radial-gradient(760px 620px at 60% 108%,rgba(236,72,153,.12),transparent 60%),
+    var(--bg)}
+  .grid-bg{position:fixed;inset:-2px;z-index:-1;opacity:.5;pointer-events:none;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:52px 52px;mask-image:radial-gradient(120% 90% at 50% 0%,#000 30%,transparent 78%)}
+  .noise{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.035;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+  .mono{font-family:var(--mono)}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:var(--dim)}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* corner-bracket panel */
+  .panel{position:relative;background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border:1px solid var(--line);border-radius:16px}
+  .brk::before,.brk::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none}
+  .brk::before{top:9px;left:9px;border-top:1.5px solid var(--line2);border-left:1.5px solid var(--line2)}
+  .brk::after{bottom:9px;right:9px;border-bottom:1.5px solid var(--line2);border-right:1.5px solid var(--line2)}
+
+  /* ---- nav ---- */
+  header{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);
+    background:rgba(6,8,15,.6);backdrop-filter:blur(12px)}
+  .nav{display:flex;align-items:center;gap:26px;height:64px}
+  .logo{font-family:var(--mono);font-weight:700;letter-spacing:.18em;font-size:.9rem;display:flex;align-items:center;gap:9px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px 1px var(--green);animation:blink 2.4s ease-in-out infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+  .nav-links{display:flex;gap:24px;margin-left:auto;font-family:var(--mono);font-size:.76rem;letter-spacing:.08em;color:var(--muted)}
+  .nav-links a:hover{color:var(--text)}
+  .btn{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;padding:.7rem 1.15rem;border-radius:10px;
+    display:inline-flex;align-items:center;gap:.5rem;border:1px solid transparent;transition:.25s;cursor:pointer;white-space:nowrap}
+  .btn-primary{background:var(--grad);color:#0a0714;font-weight:700;box-shadow:0 10px 30px -10px rgba(139,92,246,.7)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px -12px rgba(236,72,153,.7)}
+  .btn-ghost{border-color:var(--line2);color:var(--text)}
+  .btn-ghost:hover{background:rgba(120,140,190,.10);border-color:var(--muted)}
+  .nav .btn-ghost{padding:.55rem 1rem}
+
+  /* ---- hero ---- */
+  .hero{padding:76px 0 40px}
+  .hero-grid{display:grid;grid-template-columns:1.06fr .94fr;gap:52px;align-items:center}
+  .badge{display:inline-flex;align-items:center;gap:.6rem;font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:.5rem .9rem;background:rgba(16,23,42,.5)}
+  .badge .dot{width:7px;height:7px;background:var(--cyan);box-shadow:0 0 10px 1px var(--cyan)}
+  h1{font-size:clamp(2.7rem,6vw,5rem);margin:1.4rem 0 0}
+  h1 s{text-decoration:none;position:relative;color:var(--dim);-webkit-text-fill-color:var(--dim)}
+  h1 s::after{content:"";position:absolute;left:-2%;right:-2%;top:52%;height:.09em;background:var(--muted);transform:rotate(-3deg)}
+  .chasse{position:relative;display:inline-block}
+  .chasse .grad-text{position:relative}
+  .chasse .grad-text{background-size:220% 100%;animation:hue 7s ease-in-out infinite}
+  @keyframes hue{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .lede{color:var(--muted);font-size:1.06rem;max-width:34rem;margin:1.6rem 0 0}
+  .cta-row{display:flex;flex-wrap:wrap;gap:14px;margin-top:2rem}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:2rem}
+  .chip{font-family:var(--mono);font-size:.72rem;letter-spacing:.05em;color:var(--muted);
+    border:1px solid var(--line);border-radius:8px;padding:.5rem .75rem;background:rgba(16,23,42,.4);display:flex;gap:.5rem;align-items:center}
+  .chip b{color:var(--text);font-weight:700}
+  .chip i{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);font-style:normal}
+
+  /* radar console */
+  .console{aspect-ratio:1;padding:18px}
+  .console .hud-top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+  #radar{width:100%;height:calc(100% - 46px);display:block}
+  .console .hud-bot{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;color:var(--muted)}
+  .console .hud-bot b{color:var(--cyan)}
+
+  /* ---- readout band ---- */
+  .readout{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:44px}
+  .readout .wrap{display:grid;grid-template-columns:repeat(4,1fr)}
+  .stat{padding:26px 22px;border-left:1px solid var(--line)}
+  .stat:first-child{border-left:none}
+  .stat .k{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+  .stat .v{font-size:2rem;font-weight:800;margin-top:.35rem;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .stat .v em{font-style:normal;font-size:1rem;color:var(--muted);margin-left:.15rem}
+
+  /* ---- section ---- */
+  section.blk{padding:96px 0}
+  .head{max-width:44rem}
+  .head h2{font-size:clamp(1.9rem,3.4vw,2.9rem);margin-top:1rem}
+  .head p{color:var(--muted);margin-top:1rem;font-size:1.02rem}
+
+  /* protocol timeline */
+  .proto{margin-top:56px;display:grid;grid-template-columns:repeat(5,1fr);gap:16px;position:relative}
+  .node{padding:22px 18px 20px}
+  .node .idx{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;color:var(--cyan)}
+  .node .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin:16px 0 16px;
+    background:linear-gradient(135deg,rgba(76,134,255,.22),rgba(139,92,246,.22));border:1px solid var(--line2);color:var(--text)}
+  .node .ico svg{width:22px;height:22px}
+  .node h3{font-size:1.02rem;letter-spacing:-.01em}
+  .node p{color:var(--muted);font-size:.86rem;margin-top:.5rem}
+  .node .bar{position:absolute;left:0;top:0;height:2px;width:100%;background:linear-gradient(90deg,var(--blue),var(--violet));opacity:.0;transition:.4s}
+  .node:hover .bar{opacity:1}
+  .node:hover{border-color:var(--line2)}
+  .proto::after{content:"";position:absolute;top:74px;left:8%;right:8%;height:1px;z-index:-1;
+    background:repeating-linear-gradient(90deg,var(--line2) 0 6px,transparent 6px 14px)}
+
+  /* pricing module */
+  .mod{margin-top:56px;display:grid;grid-template-columns:1.25fr .9fr;gap:26px}
+  .price{padding:36px}
+  .price .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)}
+  .price .amt{font-size:3.4rem;font-weight:800;letter-spacing:-.03em;margin-top:.6rem;font-variant-numeric:tabular-nums}
+  .price .amt em{font-style:normal;font-size:1rem;color:var(--muted);font-weight:600}
+  .price .desc{color:var(--muted);margin-top:.8rem;max-width:30rem}
+  .feat{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:12px}
+  .feat li{display:flex;gap:.7rem;align-items:flex-start;font-size:.94rem}
+  .feat svg{width:18px;height:18px;color:var(--green);flex-shrink:0;margin-top:3px}
+  .price .btn-primary{margin-top:30px}
+  .aside{padding:30px;display:flex;flex-direction:column;justify-content:center;gap:18px}
+  .aside .row{display:flex;gap:14px;align-items:flex-start}
+  .aside .row .n{font-family:var(--mono);color:var(--cyan);font-size:.8rem;margin-top:2px}
+  .aside .row p{color:var(--muted);font-size:.9rem}
+  .aside .row b{color:var(--text);display:block;font-size:.98rem;font-family:var(--sans);letter-spacing:-.01em}
+
+  /* final cta */
+  .final{position:relative;overflow:hidden;margin:0 0 90px;padding:64px 40px;text-align:center;border-radius:22px}
+  .final h2{font-size:clamp(2rem,4vw,3.2rem)}
+  .final p{color:var(--muted);margin:1rem auto 0;max-width:38rem}
+  .final .cta-row{justify-content:center}
+  .final::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.5;
+    background:radial-gradient(700px 300px at 50% 120%,rgba(236,72,153,.35),transparent 60%),radial-gradient(600px 300px at 50% -40%,rgba(76,134,255,.35),transparent 60%)}
+
+  footer{border-top:1px solid var(--line);padding:34px 0}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--dim)}
+
+  @media (max-width:900px){
+    .hero-grid{grid-template-columns:1fr;gap:36px}
+    .console{max-width:420px;margin-inline:auto;width:100%}
+    .readout .wrap{grid-template-columns:1fr 1fr}
+    .stat:nth-child(3){border-left:none}
+    .stat:nth-child(n+3){border-top:1px solid var(--line)}
+    .proto{grid-template-columns:1fr 1fr}
+    .proto::after{display:none}
+    .mod{grid-template-columns:1fr}
+    .nav-links{display:none}
+  }
+  @media (max-width:520px){.readout .wrap{grid-template-columns:1fr}.stat{border-left:none;border-top:1px solid var(--line)}.stat:first-child{border-top:none}.proto{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){.chasse .grad-text,.dot{animation:none}}
+</style>
+
+<div class="field"></div>
+<div class="grid-bg"></div>
+<div class="noise"></div>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo"><span class="dot"></span>SWIPELINK</div>
+    <nav class="nav-links">
+      <a href="#protocole">PROTOCOLE</a>
+      <a href="#smartlink">SMARTLINK</a>
+      <a href="#demo">CONTACT</a>
+    </nav>
+    <a href="#demo" class="btn btn-ghost">SE CONNECTER</a>
+    <a href="#demo" class="btn btn-primary">RÉSERVER UNE DÉMO →</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="badge"><span class="dot"></span>Le logiciel de chasse automatisée</span>
+      <h1>Vous ne <s>publiez</s> plus.<br><span class="chasse"><span class="grad-text">Vous chassez.</span></span></h1>
+      <p class="lede">La chasse de talents automatisée pour la grande distribution, le CHR et le retail. Profils identifiés, contactés et pré-qualifiés&nbsp;— livrés dès le lendemain.</p>
+      <div class="cta-row">
+        <a href="#demo" class="btn btn-primary">RÉSERVER UNE DÉMONSTRATION →</a>
+        <a href="#protocole" class="btn btn-ghost">VOIR LE PROTOCOLE</a>
+      </div>
+      <div class="chips">
+        <span class="chip"><i></i>SOURCING&nbsp;<b>ACTIF</b></span>
+        <span class="chip"><i></i>RAYON&nbsp;<b>20 KM</b></span>
+        <span class="chip"><i></i>LIVRAISON&nbsp;<b>&lt; 24 H</b></span>
+      </div>
+    </div>
+
+    <div class="panel brk console">
+      <div class="hud-top"><span>RADAR · SOURCING</span><span>LAT 43.29 · LON 5.37</span></div>
+      <canvas id="radar" width="600" height="600"></canvas>
+      <div class="hud-bot"><span>CIBLES&nbsp;: <b>17</b></span><span>SCORE MOY.&nbsp;: <b>91%</b></span></div>
+    </div>
+  </div>
+</section>
+
+<div class="readout">
+  <div class="wrap">
+    <div class="stat"><div class="k">Magasins équipés</div><div class="v">+100</div></div>
+    <div class="stat"><div class="k">Recrutements 2025</div><div class="v">+700</div></div>
+    <div class="stat"><div class="k">Satisfaction</div><div class="v">4,9<em>/5</em></div></div>
+    <div class="stat"><div class="k">Premiers profils</div><div class="v">&lt;24<em>h</em></div></div>
+  </div>
+</div>
+
+<section class="blk" id="protocole">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Protocole de chasse · SMARTLINK</span>
+      <h2>Du crédit activé au profil livré, <span class="grad-text">en moins de 24&nbsp;heures.</span></h2>
+      <p>Une séquence automatisée, supervisée par un consultant dédié. Vous activez, l'algorithme chasse, vous recevez des candidats prêts à rencontrer.</p>
+    </div>
+
+    <div class="proto">
+      <div class="panel brk node"><span class="bar"></span>
+        <div class="idx">01</div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+        <h3>Crédit activé</h3>
+        <p>Vous précisez le poste en tension et lancez la chasse en un clic.</p>
+      </div>
+      <div class="panel brk node"><span class="bar"></span>
+        <div class="idx">02</div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <h3>Sourcing local</h3>
+        <p>Balayage des meilleurs profils dans un rayon défini autour du magasin.</p>
+      </div>
+      <div class="panel brk node"><span class="bar"></span>
+        <div class="idx">03</div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h13"/><path d="M3 12h9"/><path d="M3 19h13"/><path d="m17 8 3 3 4-5"/></svg></div>
+        <h3>Top profils scorés</h3>
+        <p>Tri par compatibilité&nbsp;: expérience, disponibilité, distance, prétentions.</p>
+      </div>
+      <div class="panel brk node"><span class="bar"></span>
+        <div class="idx">04</div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 0 1-4 4H7l-4 3V5a2 2 0 0 1 2-2h12a4 4 0 0 1 4 4z"/><path d="m8 11 3 3 5-5"/></svg></div>
+        <h3>Contact &amp; validation</h3>
+        <p>Chaque profil est contacté&nbsp;: disponibilité, préavis et engagement validés.</p>
+      </div>
+      <div class="panel brk node"><span class="bar"></span>
+        <div class="idx">05</div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg></div>
+        <h3>Profil transmis</h3>
+        <p>Vous recevez le candidat engagé, prêt à rencontrer. Vous décidez.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="blk" id="smartlink" style="padding-top:0">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Module SMARTLINK · Tarification</span>
+      <h2>1 crédit. Un prix unique. <span class="grad-text">Embauches illimitées.</span></h2>
+    </div>
+
+    <div class="mod">
+      <div class="panel brk price">
+        <span class="tag">Abonnement SMARTLINK</span>
+        <div class="amt">599€ <em>HT / mois</em></div>
+        <p class="desc"><strong>1 crédit = 1 mois de chasse sur un poste, embauches illimitées.</strong> 4 bouchers à recruter&nbsp;? 1 seul crédit suffit.</p>
+        <ul class="feat">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Logiciel complet inclus</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Chasse active supervisée par un consultant dédié</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Mensuel, trimestriel ou semestriel</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg>Sans engagement, résiliable à tout moment</li>
+        </ul>
+        <a href="#demo" class="btn btn-primary">ACTIVER UN CRÉDIT →</a>
+      </div>
+
+      <div class="panel brk aside">
+        <div class="row"><span class="n">▹</span><p><b>Prix unique, quel que soit le poste</b>Boulanger, ELS ou directeur&nbsp;: un crédit = un poste, même tarif.</p></div>
+        <div class="row"><span class="n">▹</span><p><b>Volume illimité sur le poste</b>Recrutez une personne ou dix sur le même crédit, sans surcoût.</p></div>
+        <div class="row"><span class="n">▹</span><p><b>Sur mesure multi-sites</b>Plusieurs crédits par mois&nbsp;? On construit un forfait sur devis.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="demo">
+  <div class="final panel">
+    <span class="eyebrow">Démonstration · 15 minutes</span>
+    <h2 style="margin-top:.8rem">On n'attend plus. <span class="grad-text">On chasse.</span></h2>
+    <p>15 minutes pour évaluer si Swipelink répond à vos besoins de recrutement. Un échange concis, une démonstration sur un poste réel, une recommandation adaptée.</p>
+    <div class="cta-row">
+      <a href="#" class="btn btn-primary">RÉSERVER UNE DÉMONSTRATION →</a>
+      <a href="#" class="btn btn-ghost">NOUS ÉCRIRE</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="logo" style="color:var(--muted)"><span class="dot"></span>SWIPELINK © 2026</div>
+    <div>CHASSE DE TALENTS AUTOMATISÉE · GRANDE DISTRIBUTION · CHR · RETAIL</div>
+    <div>CONFORME RGPD · DONNÉES TRAITÉES EN EUROPE</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var c=document.getElementById('radar');if(!c)return;var x=c.getContext('2d');
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var W=c.width,H=c.height,cx=W/2,cy=H/2,R=Math.min(cx,cy)-14;
+  // targets (blips)
+  var blips=[];for(var i=0;i<9;i++){var a=Math.random()*Math.PI*2,r=Math.pow(Math.random(),.6)*R*.92;
+    blips.push({a:a,r:r,x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r,ph:Math.random()*Math.PI*2,hi:Math.random()<.3});}
+  function ring(rr){x.beginPath();x.arc(cx,cy,rr,0,Math.PI*2);x.strokeStyle='rgba(120,150,210,.16)';x.lineWidth=1;x.stroke();}
+  function draw(t){
+    x.clearRect(0,0,W,H);
+    // grid rings + cross
+    ring(R);ring(R*.66);ring(R*.33);
+    x.strokeStyle='rgba(120,150,210,.12)';x.lineWidth=1;
+    x.beginPath();x.moveTo(cx-R,cy);x.lineTo(cx+R,cy);x.moveTo(cx,cy-R);x.lineTo(cx,cy+R);x.stroke();
+    // diagonal ticks
+    for(var k=0;k<24;k++){var ang=k/24*Math.PI*2;x.beginPath();x.moveTo(cx+Math.cos(ang)*(R-6),cy+Math.sin(ang)*(R-6));x.lineTo(cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);x.stroke();}
+    var sweep=reduce?-0.9:(t/1000*0.9)%(Math.PI*2);
+    // sweep gradient wedge
+    if(!reduce){
+      var g=x.createConicGradient?null:null;
+      for(var s=0;s<40;s++){var frac=s/40,aa=sweep-frac*0.55;
+        x.beginPath();x.moveTo(cx,cy);
+        x.arc(cx,cy,R,aa-0.02,aa+0.02);x.closePath();
+        x.fillStyle='rgba(57,227,255,'+(0.18*(1-frac))+')';x.fill();}
+      // leading line
+      x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(sweep)*R,cy+Math.sin(sweep)*R);
+      x.strokeStyle='rgba(57,227,255,.85)';x.lineWidth=2;x.stroke();
+    }
+    // blips: light up as the sweep passes
+    blips.forEach(function(b){
+      var da=Math.abs(((b.a-sweep)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI);
+      var near=reduce?0.6:Math.max(0,1-Math.min(Math.abs(((b.a-sweep+Math.PI*2)%(Math.PI*2))),0.9)/0.9);
+      var pulse=(Math.sin(t/500+b.ph)+1)/2;
+      var alpha=reduce?0.8:(0.25+near*0.75);
+      var col=b.hi?'245,166,35':'57,227,255';
+      x.beginPath();x.arc(b.x,b.y,3+near*3,0,Math.PI*2);
+      x.fillStyle='rgba('+col+','+alpha+')';x.fill();
+      if(near>0.5||reduce){x.beginPath();x.arc(b.x,b.y,7+pulse*5,0,Math.PI*2);x.strokeStyle='rgba('+col+','+(alpha*0.4)+')';x.lineWidth=1;x.stroke();}
+    });
+    // center
+    x.beginPath();x.arc(cx,cy,3,0,Math.PI*2);x.fillStyle='rgba(231,236,248,.9)';x.fill();
+    if(!reduce)requestAnimationFrame(draw);
+  }
+  if(reduce)draw(0);else requestAnimationFrame(draw);
+})();
+</script>
+
+</body>
+</html>
