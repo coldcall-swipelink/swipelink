@@ -3,9 +3,9 @@
   "trailingSlash": false,
   "redirects": [
     {
-      "source": "/blog/:path*",
-      "destination": "https://blog.swipelink.fr/blog/:path*",
-      "permanent": true
+      "source": "/blog/:path+",
+      "destination": "https://blog.swipelink.fr/blog/:path+",
+      "permanent": false
     },
     {
       "source": "/demo",
