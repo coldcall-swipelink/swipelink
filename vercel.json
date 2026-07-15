@@ -3,11 +3,6 @@
   "trailingSlash": false,
   "redirects": [
     {
-      "source": "/blog",
-      "destination": "https://blog.swipelink.fr/blog",
-      "permanent": true
-    },
-    {
       "source": "/blog/:path*",
       "destination": "https://blog.swipelink.fr/blog/:path*",
       "permanent": true
