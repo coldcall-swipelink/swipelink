@@ -3,9 +3,10 @@
   "trailingSlash": false,
   "redirects": [
     {
-      "source": "/blog/:path+",
-      "destination": "https://blog.swipelink.fr/blog/:path+",
-      "permanent": false
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "blog.swipelink.fr" }],
+      "destination": "https://swipelink.fr/:path*",
+      "permanent": true
     },
     {
       "source": "/demo",
@@ -31,6 +32,28 @@
       "source": "/app",
       "destination": "https://app.swipelink.fr/recruiter/auth",
       "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/blog",
+      "destination": "https://seo-swipelink.vercel.app/blog"
+    },
+    {
+      "source": "/blog/:path*",
+      "destination": "https://seo-swipelink.vercel.app/blog/:path*"
+    },
+    {
+      "source": "/_next/:path*",
+      "destination": "https://seo-swipelink.vercel.app/_next/:path*"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://seo-swipelink.vercel.app/sitemap.xml"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "https://seo-swipelink.vercel.app/robots.txt"
     }
   ],
   "headers": [
