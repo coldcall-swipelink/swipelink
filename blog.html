@@ -78,6 +78,10 @@
 
 <section class="section">
   <div class="container">
+    <div class="blog-toolbar">
+      <div class="blog-filters" id="blogFilters" role="tablist" aria-label="Filtrer par catégorie"></div>
+      <input type="search" id="blogSearch" class="blog-search" placeholder="Rechercher un article…" aria-label="Rechercher un article">
+    </div>
     <!-- Les cartes ci-dessous sont générées automatiquement à la publication
          d'un article depuis l'app SEO. Ne pas éditer entre les marqueurs. -->
     <div class="blog-grid" data-stagger>
@@ -202,5 +206,84 @@
 </div>
 
 <script src="assets/script.js" defer></script>
+<script>
+/* Filtre par catégorie + recherche par mot-clé sur la liste d'articles.
+   100% côté client : lit les cartes présentes, construit les onglets de
+   catégories et filtre en direct. Robuste aux articles sans catégorie. */
+(function () {
+  var grid = document.querySelector('.blog-grid');
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.blog-card'));
+  var filtersEl = document.getElementById('blogFilters');
+  var searchEl = document.getElementById('blogSearch');
+  if (!grid || !cards.length) return;
+
+  // Garantit l'affichage des cartes (l'animation d'apparition les masque sinon).
+  grid.classList.add('is-visible');
+
+  function norm(s) {
+    return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+  function catOf(card) {
+    var tag = card.querySelector('.blog-card-tag');
+    return (card.getAttribute('data-category') || (tag ? tag.textContent : '') || '').trim();
+  }
+  function textOf(card) {
+    return norm(card.getAttribute('data-search') || card.textContent);
+  }
+
+  var empty = document.createElement('p');
+  empty.className = 'blog-empty';
+  empty.hidden = true;
+  empty.textContent = 'Aucun article ne correspond à ta recherche.';
+  grid.parentNode.insertBefore(empty, grid.nextSibling);
+
+  var activeCat = 'all';
+
+  var cats = [];
+  cards.forEach(function (c) {
+    var cat = catOf(c);
+    if (cat && cats.indexOf(cat) === -1) cats.push(cat);
+  });
+  cats.sort(function (a, b) { return a.localeCompare(b, 'fr'); });
+
+  if (filtersEl && cats.length) {
+    var mk = function (label, val) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'blog-filter' + (val === activeCat ? ' is-active' : '');
+      b.textContent = label;
+      b.setAttribute('data-cat', val);
+      return b;
+    };
+    filtersEl.appendChild(mk('Tous', 'all'));
+    cats.forEach(function (c) { filtersEl.appendChild(mk(c, c)); });
+    filtersEl.addEventListener('click', function (e) {
+      var btn = e.target.closest('.blog-filter');
+      if (!btn) return;
+      activeCat = btn.getAttribute('data-cat');
+      filtersEl.querySelectorAll('.blog-filter').forEach(function (b) {
+        b.classList.toggle('is-active', b === btn);
+      });
+      apply();
+    });
+  }
+
+  function apply() {
+    var q = norm(searchEl ? searchEl.value : '');
+    var visible = 0;
+    cards.forEach(function (c) {
+      var okCat = activeCat === 'all' || catOf(c) === activeCat;
+      var okSearch = !q || textOf(c).indexOf(q) !== -1;
+      var show = okCat && okSearch;
+      c.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    empty.hidden = visible > 0;
+  }
+
+  if (searchEl) searchEl.addEventListener('input', apply);
+  apply();
+})();
+</script>
 </body>
 </html>
