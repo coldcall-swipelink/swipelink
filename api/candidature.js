@@ -106,11 +106,25 @@ function overIpLimit(ip) {
 }
 
 async function handler(req, res) {
+  // Toute exception imprévue doit ressortir en JSON propre (jamais la page
+  // d'erreur brute de Vercel, illisible côté formulaire).
+  try {
+    return await handleCandidature(req, res);
+  } catch (e) {
+    console.error('Erreur inattendue :', e);
+    return res.status(500).json({ error: 'Erreur interne inattendue. Réessayez plus tard.' });
+  }
+}
+
+async function handleCandidature(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Méthode non autorisée.' });
   }
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // trim : un espace ou un retour à la ligne collé avec la valeur dans Vercel
+  // ferait planter createClient (« Invalid URL »).
+  let supabaseUrl = String(process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
+  const supabaseKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+  if (supabaseUrl && !/^https?:\/\//i.test(supabaseUrl)) supabaseUrl = `https://${supabaseUrl}`;
   if (!supabaseUrl || !supabaseKey) {
     return res.status(503).json({ error: 'Service momentanément indisponible.' });
   }
@@ -166,7 +180,13 @@ async function handler(req, res) {
     await transmitToPipeline(supabase, candidat, file.buf, ext);
   } catch (e) {
     console.error('Dépôt de CV échoué :', e && e.message);
-    return res.status(500).json({ error: "Impossible d'enregistrer le CV, réessayez plus tard." });
+    // L'étape en tête du message ("Upload du CV", "Resume", "Candidat",
+    // "Lien CV") est affichée au candidat : sans détail interne, mais assez
+    // pour diagnostiquer depuis l'écran.
+    const stage = String((e && e.message) || '').split(':')[0].trim();
+    return res.status(500).json({
+      error: `Impossible d'enregistrer le CV${stage ? ` (étape : ${stage})` : ''}. Réessayez plus tard.`,
+    });
   }
 
   return res.status(200).json({ ok: true });
