@@ -1,18 +1,19 @@
 // api/candidature.js — réception des candidatures (espace candidat).
 //
+// Un dépôt sur le site est traité exactement comme un CV uploadé dans le CSM
+// (cf. transmitMetaLead côté CSM) : fichier dans le bucket "resumes", ligne
+// Resume (identité + bucket_path + source SITE), Candidat réutilisé au même
+// téléphone ou créé, lien Candidate_to_resume + main_resume_id. Aucune table
+// dédiée au site : tout part dans les tables métier existantes, le candidat
+// apparaît directement dans le backoffice.
+//
 // Sécurité appliquée côté serveur (la seule qui fait foi) :
 //   1. Honeypot : le champ caché "site_web" rempli => réponse succès factice, rien n'est stocké.
 //   2. Cloudflare Turnstile : le jeton est vérifié avec la clé secrète (TURNSTILE_SECRET_KEY).
-//   3. Limite par IP : 5 dépôts max par heure (comptés dans la table candidatures via ip_hash).
+//   3. Limite par IP : 5 dépôts max par heure (en mémoire, par instance serverless).
 //   4. Validation stricte : champs bornés, fichier PDF/Word uniquement, 4 Mo max,
 //      type réel vérifié par les premiers octets (pas seulement l'extension).
 //
-// Stockage : Supabase — bucket privé "cvs" + table "candidatures".
-//
-// Transmission au pipeline métier : après enregistrement, le dépôt crée les
-// mêmes lignes que le CSM crée quand un CV est déposé sur un lead Meta
-// (bucket "resumes" + Resume + Candidat réutilisé par téléphone +
-// Candidate_to_resume + main_resume_id) — voir transmitToPipeline plus bas.
 // Configuration : voir docs/SETUP-CANDIDATURES.md.
 
 const crypto = require('crypto');
@@ -21,9 +22,6 @@ const { createClient } = require('@supabase/supabase-js');
 
 const MAX_FILE = 4 * 1024 * 1024; // 4 Mo (le corps de requête Vercel est plafonné à 4,5 Mo)
 const LIMIT_PER_HOUR = 5;
-// Disjoncteur global et seuil d'alerte, réglables sans redéploiement via les variables Vercel.
-const DAILY_CAP = parseInt(process.env.DAILY_CAP || '200', 10);
-const ALERT_THRESHOLD = parseInt(process.env.ALERT_THRESHOLD || '50', 10);
 const CONTENT_TYPES = {
   pdf: 'application/pdf',
   doc: 'application/msword',
@@ -93,6 +91,20 @@ async function verifyTurnstile(token, ip) {
   }
 }
 
+// Limite par IP en mémoire : simple et sans table dédiée. Chaque instance
+// serverless garde son propre compteur (remis à zéro au recyclage de
+// l'instance) — suffisant pour casser les rafales, Turnstile fait le reste.
+const ipHits = new Map();
+function overIpLimit(ip) {
+  const now = Date.now();
+  const hits = (ipHits.get(ip) || []).filter((t) => now - t < 3600 * 1000);
+  if (hits.length >= LIMIT_PER_HOUR) return true;
+  hits.push(now);
+  ipHits.set(ip, hits);
+  if (ipHits.size > 5000) ipHits.clear(); // borne mémoire, au pire on relâche la limite
+  return false;
+}
+
 async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Méthode non autorisée.' });
@@ -126,6 +138,11 @@ async function handler(req, res) {
     return res.status(403).json({ error: 'Vérification anti-robots échouée. Rechargez la page et réessayez.' });
   }
 
+  // 3. Limite par IP.
+  if (overIpLimit(ip)) {
+    return res.status(429).json({ error: 'Trop de dépôts récents. Réessayez dans une heure.' });
+  }
+
   // 4. Fichier.
   if (!file || !file.buf.length) return res.status(400).json({ error: 'CV manquant.' });
   if (truncated || file.buf.length > MAX_FILE) {
@@ -138,96 +155,19 @@ async function handler(req, res) {
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
-  const ipHash = crypto.createHash('sha256')
-    .update(ip + (process.env.IP_HASH_SALT || 'swipelink'))
-    .digest('hex');
-
-  // 3a. Limite par IP : 5 dépôts max par heure.
-  const oneHourAgo = new Date(Date.now() - 3600 * 1000).toISOString();
-  const { count, error: countError } = await supabase
-    .from('candidatures')
-    .select('id', { count: 'exact', head: true })
-    .eq('ip_hash', ipHash)
-    .gte('created_at', oneHourAgo);
-  if (countError) return res.status(500).json({ error: 'Erreur interne, réessayez plus tard.' });
-  if ((count || 0) >= LIMIT_PER_HOUR) {
-    return res.status(429).json({ error: 'Trop de dépôts récents. Réessayez dans une heure.' });
-  }
-
-  // 3b. Disjoncteur global : borne le coût absolu en cas d'attaque distribuée.
-  // Réglé très au-dessus du trafic organique pour ne jamais gêner de vrais candidats.
-  const oneDayAgo = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-  const { count: dailyCount, error: dailyError } = await supabase
-    .from('candidatures')
-    .select('id', { count: 'exact', head: true })
-    .gte('created_at', oneDayAgo);
-  if (dailyError) return res.status(500).json({ error: 'Erreur interne, réessayez plus tard.' });
-  if ((dailyCount || 0) >= DAILY_CAP) {
-    return res.status(429).json({
-      error: 'Beaucoup de candidatures aujourd’hui ! Réessayez demain, ou envoyez votre CV à contact@swipelink.fr.',
-    });
-  }
-
-  const email = fields.email.trim().toLowerCase();
   const candidat = {
     prenom: fields.prenom.trim(),
     nom: fields.nom.trim(),
     telephone: fields.telephone.trim(),
-    email,
-    ip_hash: ipHash,
+    email: fields.email.trim().toLowerCase(),
   };
 
-  // Déduplication : un dépôt avec le même email sous 7 jours met à jour la
-  // candidature existante (nouveau CV compris) au lieu de créer un doublon.
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
-  const { data: existing } = await supabase
-    .from('candidatures')
-    .select('id, cv_path')
-    .eq('email', email)
-    .gte('created_at', sevenDaysAgo)
-    .limit(1);
-  const duplicate = existing && existing[0];
-
-  // Stockage : fichier dans le bucket privé, puis ligne en base.
-  const path = `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`;
-  const { error: uploadError } = await supabase.storage
-    .from('cvs')
-    .upload(path, file.buf, { contentType: CONTENT_TYPES[ext] });
-  if (uploadError) return res.status(500).json({ error: "Impossible d'enregistrer le CV, réessayez plus tard." });
-
-  if (duplicate) {
-    const { error: updateError } = await supabase
-      .from('candidatures')
-      .update({ ...candidat, cv_path: path })
-      .eq('id', duplicate.id);
-    if (updateError) {
-      await supabase.storage.from('cvs').remove([path]);
-      return res.status(500).json({ error: 'Erreur interne, réessayez plus tard.' });
-    }
-    if (duplicate.cv_path && duplicate.cv_path !== path) {
-      await supabase.storage.from('cvs').remove([duplicate.cv_path]);
-    }
-  } else {
-    const { error: insertError } = await supabase.from('candidatures').insert({ ...candidat, cv_path: path });
-    if (insertError) {
-      await supabase.storage.from('cvs').remove([path]);
-      return res.status(500).json({ error: 'Erreur interne, réessayez plus tard.' });
-    }
-  }
-
-  // Transmission au pipeline métier (mêmes lignes que le CSM). Best effort :
-  // si le projet Supabase configuré ne porte pas ces tables (projet dédié au
-  // site), le dépôt reste consultable dans `candidatures` et rien n'échoue
-  // côté candidat.
   try {
     await transmitToPipeline(supabase, candidat, file.buf, ext);
   } catch (e) {
-    console.error('Transmission pipeline échouée :', e && e.message);
+    console.error('Dépôt de CV échoué :', e && e.message);
+    return res.status(500).json({ error: "Impossible d'enregistrer le CV, réessayez plus tard." });
   }
-
-  // Tâches d'arrière-plan best effort : jamais bloquantes pour le candidat.
-  try { await maybeAlert(supabase, (dailyCount || 0) + 1); } catch (e) { /* best effort */ }
-  try { await purgeOldCandidatures(supabase); } catch (e) { /* best effort */ }
 
   return res.status(200).json({ ok: true });
 }
@@ -245,7 +185,7 @@ function phoneVariants(phone) {
 }
 
 // Un CV déposé sur le site crée les lignes métier, la même forme que le CSM
-// produit pour un CV déposé sur un lead Meta (origin=SITE au lieu de META) :
+// produit pour un CV déposé sur un lead Meta (source SITE au lieu de META) :
 //   1. dépôt du fichier dans le bucket "resumes" ;
 //   2. création du Resume (identité + bucket_path + source SITE) ;
 //   3. réutilisation du Candidat au même téléphone, sinon création ;
@@ -344,45 +284,6 @@ async function transmitToPipeline(supabase, candidat, buf, ext) {
     await supabase.storage.from('resumes').remove([bucketPath]);
     throw e;
   }
-}
-
-// Alerte email (via Resend, optionnel) quand le volume du jour devient inhabituel.
-// Une seule alerte par jour, verrouillée par la table `alertes` (clé primaire = jour).
-async function maybeAlert(supabase, todayCount) {
-  if (todayCount < ALERT_THRESHOLD) return;
-  const jour = new Date().toISOString().slice(0, 10);
-  const { error } = await supabase.from('alertes').insert({ jour, type: 'volume' });
-  if (error) return; // déjà alerté aujourd'hui (conflit), ou table absente
-  const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.ALERT_EMAIL;
-  if (!apiKey || !to) return;
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      from: 'Swipelink Alertes <onboarding@resend.dev>',
-      to: [to],
-      subject: `Swipelink : volume de candidatures inhabituel (${todayCount} en 24 h)`,
-      text: `${todayCount} candidatures reçues sur les dernières 24 heures (seuil d'alerte : ${ALERT_THRESHOLD}).\n\n` +
-        `Si c'est un vrai pic de candidats, tout va bien — le disjoncteur coupera à ${DAILY_CAP}.\n` +
-        `Si c'est du spam, vérifiez la table candidatures dans Supabase.`,
-    }),
-  });
-}
-
-// Rétention RGPD : purge opportuniste des candidatures de plus de 2 ans
-// (recommandation CNIL pour les données de recrutement), par petits lots.
-async function purgeOldCandidatures(supabase) {
-  const twoYearsAgo = new Date(Date.now() - 2 * 365 * 24 * 3600 * 1000).toISOString();
-  const { data: old } = await supabase
-    .from('candidatures')
-    .select('id, cv_path')
-    .lt('created_at', twoYearsAgo)
-    .limit(10);
-  if (!old || !old.length) return;
-  const paths = old.map((r) => r.cv_path).filter(Boolean);
-  if (paths.length) await supabase.storage.from('cvs').remove(paths);
-  await supabase.from('candidatures').delete().in('id', old.map((r) => r.id));
 }
 
 module.exports = handler;
