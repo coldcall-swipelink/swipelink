@@ -1,11 +1,11 @@
 // api/candidature.js — réception des candidatures (espace candidat).
 //
-// Un dépôt sur le site est traité exactement comme un CV uploadé dans le CSM
-// (cf. transmitMetaLead côté CSM) : fichier dans le bucket "resumes", ligne
-// Resume (identité + bucket_path + source SITE), Candidat réutilisé au même
-// téléphone ou créé, lien Candidate_to_resume + main_resume_id. Aucune table
-// dédiée au site : tout part dans les tables métier existantes, le candidat
-// apparaît directement dans le backoffice.
+// Un dépôt sur le site suit exactement le cheminement de l'upload « volume »
+// du produit Smartlink : fichier dans le bucket "resumes", ligne Resume en
+// mode volume (upload_mode = 'volume', parsing_pipeline = 'main',
+// llm_state = 'waiting', pas de target_offer_id), puis mise en file de la
+// tâche LLM auprès de l'event-manager. Le pipeline LLM parse le CV et crée
+// le Candidat — rien n'est créé à la main ici, et aucune table dédiée au site.
 //
 // Sécurité appliquée côté serveur (la seule qui fait foi) :
 //   1. Honeypot : le champ caché "site_web" rempli => réponse succès factice, rien n'est stocké.
@@ -192,30 +192,20 @@ async function handleCandidature(req, res) {
   return res.status(200).json({ ok: true });
 }
 
-// Variantes de téléphone qui valent la peine d'être rapprochées d'un Candidat
-// existant (0X… ↔ +33X…) — même logique que le CSM.
-function phoneVariants(phone) {
-  const raw = phone.trim();
-  const digits = raw.replace(/[^\d+]/g, '');
-  const out = new Set([raw, digits]);
-  if (digits.startsWith('+33')) out.add(`0${digits.slice(3)}`);
-  else if (digits.startsWith('33') && digits.length === 11) out.add(`0${digits.slice(2)}`);
-  else if (digits.startsWith('0') && digits.length === 10) out.add(`+33${digits.slice(1)}`);
-  return [...out].filter((v) => v.length >= 6);
-}
-
-// Un CV déposé sur le site crée les lignes métier, la même forme que le CSM
-// produit pour un CV déposé sur un lead Meta (source SITE au lieu de META) :
+// Un CV déposé sur le site suit le MÊME cheminement que l'upload « volume »
+// du produit Smartlink (multi-diffusion) :
 //   1. dépôt du fichier dans le bucket "resumes" ;
-//   2. création du Resume (identité + bucket_path + source SITE) ;
-//   3. réutilisation du Candidat au même téléphone, sinon création ;
-//   4. lien Candidate_to_resume (+ main_resume_id quand le candidat n'en a pas).
-// Pas de Candidate_to_offer : un dépôt spontané ne vise aucune offre — le
-// candidat rejoint la CVthèque, pas la file « Validation candidat ».
-// Rollback best effort en sens inverse en cas d'échec.
+//   2. création du Resume en mode volume : upload_mode = 'volume',
+//      parsing_pipeline = 'main', llm_state = 'waiting' (l'état réclamable par
+//      claim_llm), pas de target_offer_id (dépôt spontané, aucune offre visée) ;
+//   3. mise en file de la tâche LLM auprès de l'event-manager
+//      (POST /llm/llm-task, même appel que le CSM dans failed-cv.ts).
+// C'est ensuite le pipeline LLM qui parse le CV et crée le Candidat et les
+// liens — on ne crée RIEN à la main ici, exactement comme le flux volume.
+// Rollback : si l'insertion du Resume échoue, le fichier déposé est retiré.
 async function transmitToPipeline(supabase, candidat, buf, ext) {
-  // 1 — le fichier CV. Chemin unique par dépôt, dans un espace de noms dédié.
-  const bucketPath = `site/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`;
+  // 1 — le fichier CV, à la racine du bucket, nom aléatoire.
+  const bucketPath = `${crypto.randomUUID()}.${ext}`;
   {
     const { error } = await supabase.storage.from('resumes').upload(bucketPath, buf, {
       upsert: true,
@@ -225,25 +215,22 @@ async function transmitToPipeline(supabase, candidat, buf, ext) {
     if (error) throw new Error(`Upload du CV : ${error.message}`);
   }
 
+  // 2 — le Resume en mode volume. On renseigne quand même l'identité saisie
+  // dans le formulaire (le parsing LLM complètera/confirmera depuis le CV) ;
+  // source = SITE marque la provenance, avec repli sans source si l'enum de
+  // la base la refuse (même repli que le CSM pour source = META).
+  const resumeRow = {
+    first_name: candidat.prenom,
+    last_name: candidat.nom,
+    email: candidat.email,
+    phone_number: candidat.telephone,
+    bucket_path: bucketPath,
+    upload_mode: 'volume',
+    parsing_pipeline: 'main',
+    llm_state: 'waiting',
+  };
   let resumeId = null;
-  let createdCandidateId = null;
-  let candidateId = null;
-  let linkId = null;
-  let setMainResume = false;
-
   try {
-    // 2 — la ligne Resume (identité + chemin du CV + provenance). Les noms et
-    // emails du backoffice sont lus depuis le Resume, il doit donc les porter ;
-    // source = SITE marque d'où vient le CV. Si la base refuse cette valeur
-    // (enum sans SITE), on réessaie sans elle plutôt que de perdre le dépôt —
-    // même repli que le CSM pour source = META.
-    const resumeRow = {
-      first_name: candidat.prenom,
-      last_name: candidat.nom,
-      email: candidat.email,
-      phone_number: candidat.telephone,
-      bucket_path: bucketPath,
-    };
     const resIns = await supabase
       .from('Resume')
       .insert({ ...resumeRow, source: 'SITE' })
@@ -258,51 +245,36 @@ async function transmitToPipeline(supabase, candidat, buf, ext) {
     } else {
       throw new Error(`Resume : ${resIns.error.message}`);
     }
-
-    // 3 — le Candidat : réutiliser un existant au même téléphone, sinon créer.
-    const { data: existing } = await supabase
-      .from('Candidate')
-      .select('id, main_resume_id')
-      .in('phone_number', phoneVariants(candidat.telephone))
-      .limit(1);
-    if (existing && existing.length > 0) {
-      candidateId = String(existing[0].id);
-      setMainResume = !existing[0].main_resume_id;
-    }
-    if (!candidateId) {
-      const candIns = await supabase
-        .from('Candidate')
-        .insert({ phone_number: candidat.telephone })
-        .select('id')
-        .single();
-      if (candIns.error) throw new Error(`Candidat : ${candIns.error.message}`);
-      candidateId = createdCandidateId = String(candIns.data.id);
-      setMainResume = true;
-    }
-
-    // 4 — le lien CV ↔ candidat. Convention amont : Candidate.main_resume_id
-    // pointe vers le LIEN Candidate_to_resume, pas vers le Resume lui-même.
-    const linkIns = await supabase
-      .from('Candidate_to_resume')
-      .insert({ candidate_id: candidateId, resume_id: resumeId })
-      .select('id')
-      .single();
-    if (linkIns.error) throw new Error(`Lien CV : ${linkIns.error.message}`);
-    linkId = String(linkIns.data.id);
-    if (setMainResume) {
-      await supabase.from('Candidate').update({ main_resume_id: linkId }).eq('id', candidateId);
-    }
   } catch (e) {
-    // Rollback best effort, enfants d'abord (même ordre que le CSM). Le chemin
-    // du fichier est unique par tentative : on le supprime aussi.
-    if (linkId) await supabase.from('Candidate_to_resume').delete().eq('id', linkId);
-    if (setMainResume && candidateId && !createdCandidateId) {
-      await supabase.from('Candidate').update({ main_resume_id: null }).eq('id', candidateId);
-    }
-    if (createdCandidateId) await supabase.from('Candidate').delete().eq('id', createdCandidateId);
-    if (resumeId) await supabase.from('Resume').delete().eq('id', resumeId);
     await supabase.storage.from('resumes').remove([bucketPath]);
     throw e;
+  }
+
+  // 3 — la tâche LLM (event-manager), avec un petit délai pour que la ligne
+  // 'waiting' soit déjà visible de claim_llm — mêmes paramètres que le CSM.
+  // Best effort : si l'event-manager est indisponible ou non configuré, la
+  // ligne reste en 'waiting' et resume_reconcile la reprendra au prochain
+  // passage — le dépôt du candidat n'échoue pas pour autant.
+  const emBase = String(process.env.EVENT_MANAGER_URL || '').trim().replace(/\/+$/, '');
+  if (!emBase) {
+    console.warn('EVENT_MANAGER_URL absente : Resume', resumeId, "en 'waiting', reprise par le cron.");
+    return;
+  }
+  try {
+    const headers = { 'content-type': 'application/json' };
+    const emKey = String(process.env.EVENT_MANAGER_API_KEY || '').trim();
+    if (emKey) headers['x-api-key'] = emKey;
+    const r = await fetch(`${emBase}/llm/llm-task`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ resumeId, delaySeconds: 5, pipeline: 'main' }),
+      signal: AbortSignal.timeout(20000),
+    });
+    const text = await r.text().catch(() => '');
+    if (!r.ok) throw new Error(`(${r.status}) ${text.slice(0, 200)}`);
+    console.info(`Dépôt site : Resume ${resumeId} en file → ${text.slice(0, 200)}`);
+  } catch (e) {
+    console.warn('Event-manager injoignable (Resume', resumeId, "reste en 'waiting') :", e && e.message);
   }
 }
 
@@ -310,5 +282,4 @@ module.exports = handler;
 module.exports.parseForm = parseForm;
 module.exports.validateFields = validateFields;
 module.exports.goodMagic = goodMagic;
-module.exports.phoneVariants = phoneVariants;
 module.exports.transmitToPipeline = transmitToPipeline;

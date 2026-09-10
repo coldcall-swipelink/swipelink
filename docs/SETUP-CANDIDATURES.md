@@ -1,61 +1,57 @@
 # Espace candidat — mise en service du dépôt de CV
 
 Le formulaire `/candidats` envoie les candidatures à la fonction `api/candidature.js`,
-qui traite chaque dépôt **exactement comme le CSM traite un CV uploadé** : le fichier
-part dans le bucket `resumes` du projet Supabase de production, et les lignes métier
-sont créées (`Resume` avec `source = SITE`, `Candidate` réutilisé au même téléphone ou
-créé, lien `Candidate_to_resume` + `main_resume_id`). Le candidat apparaît donc
-directement dans le backoffice, dans la CVthèque — rien à créer côté base : aucune
-table ni bucket dédié au site.
+qui suit **exactement le cheminement de l'upload « volume » du produit Smartlink** :
 
-Tant que les variables d'environnement ci-dessous ne sont pas configurées dans Vercel,
-l'API répond « Service momentanément indisponible » et la page invite le candidat à
-écrire à contact@swipelink.fr.
+1. le fichier part dans le bucket `resumes` du projet Supabase de production,
+   à la racine (nom aléatoire `<uuid>.<ext>`) ;
+2. une ligne `Resume` est créée en mode volume : `upload_mode = 'volume'`,
+   `parsing_pipeline = 'main'`, `llm_state = 'waiting'` (l'état que `claim_llm`
+   réclame), **pas de `target_offer_id`** (dépôt spontané, aucune offre visée),
+   `source = 'SITE'` pour la provenance (repli sans `source` si l'enum la refuse) ;
+3. la tâche LLM est mise en file auprès de l'event-manager
+   (`POST /llm/llm-task` avec `{ resumeId, delaySeconds: 5, pipeline: 'main' }`,
+   même appel que le CSM).
+
+C'est ensuite le pipeline LLM qui parse le CV et crée le Candidat et les liens —
+rien n'est créé à la main, et aucune table dédiée au site. Si l'event-manager est
+indisponible, la ligne reste en `waiting` et `resume_reconcile` la reprend.
 
 ## 1. Configurer Vercel
 
-Projet Vercel → Settings → Environment Variables (environnement Production) —
-les valeurs viennent du **projet Supabase de production** (celui que lit le CSM) :
+Projet Vercel → Settings → Environment Variables, cochées **Production ET Preview** :
 
 | Variable | Valeur |
 |---|---|
 | `SUPABASE_URL` | `https://qxjpkjetclwxxpqkbibv.supabase.co` (le projet de production, celui du CSM) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API → service_role (⚠️ secrète, jamais côté client) |
-| `TURNSTILE_SECRET_KEY` | voir étape 2 |
+| `SUPABASE_SERVICE_ROLE_KEY` | la clé service_role **de ce même projet** (⚠️ secrète, jamais côté client) |
+| `EVENT_MANAGER_URL` | même valeur que dans le projet Vercel du CSM |
+| `EVENT_MANAGER_API_KEY` | même valeur que dans le projet Vercel du CSM |
+| `TURNSTILE_SECRET_KEY` | la secret key du widget Cloudflare Turnstile (voir étape 2) |
 
-Cocher les environnements **Production ET Preview** pour chaque variable (sinon les
-déploiements de preview des PR répondent 503). Puis redéployer (Deployments →
-Redeploy, ou un nouveau push) : un build ne prend en compte que les variables
-présentes au moment où il est lancé.
+Un build ne prend en compte que les variables présentes à son lancement : après un
+changement, redéployer (Deployments → Redeploy, ou un nouveau push).
 
-## 2. Activer Cloudflare Turnstile (anti-robots)
+## 2. Cloudflare Turnstile (anti-robots)
 
-1. https://dash.cloudflare.com → Turnstile → Add site (gratuit), domaine `swipelink.fr`.
-2. Récupérer la **site key** (publique) et la **secret key**.
-3. Dans `candidats.html`, remplacer la valeur de `TURNSTILE_SITE_KEY` (clé de test
-   `1x00000000000000000000AA`) par la site key.
-4. Mettre la secret key dans la variable `TURNSTILE_SECRET_KEY` sur Vercel.
-
-Tant que les clés de test sont en place, le widget s'affiche et le flux fonctionne,
-mais il laisse tout passer : à remplacer avant d'annoncer publiquement la page.
+Widget créé sur dash.cloudflare.com → Turnstile (hostnames : `swipelink.fr` +
+`vercel.app` pour les previews). La **site key** est dans `candidats.html`
+(constante `TURNSTILE_SITE_KEY`), la **secret key** dans `TURNSTILE_SECRET_KEY`
+sur Vercel — les deux vont par paire.
 
 ## 3. Consulter les candidatures
 
-Les candidats déposés depuis le site sont dans le backoffice (CSM), comme n'importe
-quel candidat : tables `Resume` / `Candidate`, CV dans le bucket `resumes` (chemins
-`site/AAAA-MM-JJ/…`). La provenance est marquée par `Resume.source = SITE`.
-
-Pas de `Candidate_to_offer` : un dépôt spontané ne vise aucune offre — le candidat
-rejoint la CVthèque, pas la file « Validation candidat ».
+Les candidats déposés depuis le site suivent le pipeline normal : une fois parsés
+par le LLM, ils apparaissent dans le backoffice comme n'importe quel CV uploadé en
+mode volume (provenance `Resume.source = 'SITE'`). Un CV dont le parsing échoue
+remonte dans « CV en échec » du CSM, comme les autres.
 
 ## Sécurité en place (résumé)
 
 - Honeypot (champ caché) : les robots reçoivent un faux succès, rien n'est stocké.
 - Turnstile vérifié côté serveur (échec ou Cloudflare injoignable ⇒ refus).
-- Limite par IP : 5 dépôts/heure, comptés en mémoire par instance serverless
-  (aucune table nécessaire ; Turnstile reste la vraie barrière anti-robots).
+- Limite par IP : 5 dépôts/heure, comptés en mémoire par instance serverless.
 - Fichier : PDF/Word uniquement, 4 Mo max, type réel vérifié par les premiers octets.
 - Champs bornés et validés côté serveur (le client ne fait foi de rien).
-- Rollback : si une étape échoue en cours de route, les lignes déjà créées et le
-  fichier déposé sont annulés en sens inverse (best effort), et le candidat reçoit
-  une erreur claire.
+- Rollback : si la création du Resume échoue, le fichier déposé est retiré et le
+  candidat reçoit une erreur nommant l'étape en cause.
