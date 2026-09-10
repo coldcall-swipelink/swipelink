@@ -23,7 +23,10 @@ les valeurs viennent du **projet Supabase de production** (celui que lit le CSM)
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API → service_role (⚠️ secrète, jamais côté client) |
 | `TURNSTILE_SECRET_KEY` | voir étape 2 |
 
-Puis redéployer (Deployments → Redeploy) pour que les variables soient prises en compte.
+Cocher les environnements **Production ET Preview** pour chaque variable (sinon les
+déploiements de preview des PR répondent 503). Puis redéployer (Deployments →
+Redeploy, ou un nouveau push) : un build ne prend en compte que les variables
+présentes au moment où il est lancé.
 
 ## 2. Activer Cloudflare Turnstile (anti-robots)
 
