@@ -19,7 +19,7 @@ les valeurs viennent du **projet Supabase de production** (celui que lit le CSM)
 
 | Variable | Valeur |
 |---|---|
-| `SUPABASE_URL` | Supabase (projet de production) → Settings → API → Project URL |
+| `SUPABASE_URL` | `https://qxjpkjetclwxxpqkbibv.supabase.co` (le projet de production, celui du CSM) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API → service_role (⚠️ secrète, jamais côté client) |
 | `TURNSTILE_SECRET_KEY` | voir étape 2 |
 
