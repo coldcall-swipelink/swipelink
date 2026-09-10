@@ -77,6 +77,34 @@ mais il laisse tout passer : à remplacer avant d'annoncer publiquement la page.
 - La liste : Supabase → Table Editor → `candidatures`.
 - Les CV : Supabase → Storage → `cvs` (chemin dans la colonne `cv_path`).
 
+## 5. Transmission au pipeline métier (CSM)
+
+Après chaque dépôt réussi, l'API crée en plus les lignes métier — la même
+forme que le CSM produit quand un CV est déposé sur un lead Meta :
+
+1. le fichier est copié dans le bucket `resumes` (chemin `site/AAAA-MM-JJ/<uuid>.<ext>`) ;
+2. une ligne `Resume` est créée (identité + `bucket_path` + `source = SITE` ;
+   si l'enum de la base refuse `SITE`, l'insertion est refaite sans `source`) ;
+3. le `Candidate` existant au même téléphone (variantes `0X…` ↔ `+33X…`) est
+   réutilisé, sinon créé ;
+4. le lien `Candidate_to_resume` est créé, et `Candidate.main_resume_id`
+   pointe vers ce lien quand le candidat n'en avait pas (convention amont).
+
+Pas de `Candidate_to_offer` : un dépôt spontané ne vise aucune offre — le
+candidat rejoint la CVthèque du backoffice, pas la file « Validation candidat ».
+
+Pour que cette transmission fonctionne, `SUPABASE_URL` et
+`SUPABASE_SERVICE_ROLE_KEY` doivent pointer vers le **projet Supabase de
+production** (celui que lit le CSM), qui porte les tables `Resume`,
+`Candidate`, `Candidate_to_resume` et le bucket `resumes`. Les tables
+`candidatures` et `alertes` de l'étape 1 sont alors à créer dans ce même
+projet. Cette étape est **best effort** : si les tables ou le bucket
+n'existent pas (projet Supabase dédié au site), la transmission échoue
+silencieusement (visible dans les logs Vercel), le dépôt reste enregistré
+dans `candidatures` et le candidat reçoit toujours une réponse de succès.
+En cas d'échec en cours de route, les lignes déjà créées sont annulées en
+sens inverse (rollback best effort), fichier compris.
+
 ## Sécurité en place (résumé)
 
 - Honeypot (champ caché) : les robots reçoivent un faux succès, rien n'est stocké.
