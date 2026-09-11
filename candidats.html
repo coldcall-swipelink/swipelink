@@ -326,15 +326,15 @@
             <div class="cv-drop" id="cvDrop" role="button" tabindex="0" aria-label="Déposer votre CV">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <strong>Glissez votre CV ici, ou cliquez pour le choisir</strong>
-              <span>PDF ou Word · 4 Mo maximum</span>
-              <input type="file" id="cvFile" name="cv" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+              <span>PDF, JPG ou PNG · 4 Mo maximum</span>
+              <input type="file" id="cvFile" name="cv" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
             </div>
             <div class="cv-file" id="cvFileChip">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               <span class="cv-file-name" id="cvFileName"></span>
               <button type="button" id="cvFileRemove" aria-label="Retirer le fichier">✕</button>
             </div>
-            <span class="cv-error" id="cvFileError">Ajoutez votre CV (PDF ou Word, 4&nbsp;Mo max).</span>
+            <span class="cv-error" id="cvFileError">Ajoutez votre CV (PDF, JPG ou PNG, 4&nbsp;Mo max).</span>
           </div>
 
           <!-- Champ piège (honeypot) : un humain ne le voit pas, un robot le remplit -->
@@ -472,11 +472,11 @@
   var consentCheck = document.getElementById('cv-consent-check');
 
   var MAX_SIZE = 4 * 1024 * 1024;
-  var OK_EXT = /\.(pdf|doc|docx)$/i;
+  var OK_EXT = /\.(pdf|jpe?g|png)$/i;
 
   function setFile(file) {
     if (!file) return;
-    if (!OK_EXT.test(file.name)) { showFileError('Format non accepté : utilisez un PDF ou un document Word.'); return; }
+    if (!OK_EXT.test(file.name)) { showFileError('Format non accepté : utilisez un PDF ou une image (JPG, PNG).'); return; }
     if (file.size > MAX_SIZE) { showFileError('Fichier trop lourd : 4 Mo maximum.'); return; }
     if (fileInput.files.length === 0 || fileInput.files[0] !== file) {
       try {

@@ -1,17 +1,20 @@
 // api/candidature.js — réception des candidatures (espace candidat).
 //
 // Un dépôt sur le site suit exactement le cheminement de l'upload « volume »
-// du produit Smartlink : fichier dans le bucket "resumes", ligne Resume en
-// mode volume (upload_mode = 'VOLUME', parsing_pipeline = 'main',
-// llm_state = 'waiting', pas de target_offer_id), puis mise en file de la
-// tâche LLM auprès de l'event-manager. Le pipeline LLM parse le CV et crée
-// le Candidat — rien n'est créé à la main ici, et aucune table dédiée au site.
+// du produit Swipelink (admin/upload-resumes) : fichier dans le bucket
+// "resumes" (racine, uuid.ext), ligne Resume minimale { bucket_path,
+// upload_mode: VOLUME, target_offer_id: null, source: SITE } — les défauts de
+// la base posent ocr_state/llm_state = waiting et parsing_pipeline = main, et
+// le trigger notify_ocr appelle lui-même l'event-manager. Le pipeline
+// OCR → LLM parse le CV et crée le Candidat — rien d'autre à faire ici, et
+// aucune table dédiée au site. En mode VOLUME, un CV dont le téléphone
+// correspond à un candidat existant est ignoré par le pipeline (pas écrasé).
 //
 // Sécurité appliquée côté serveur (la seule qui fait foi) :
 //   1. Honeypot : le champ caché "site_web" rempli => réponse succès factice, rien n'est stocké.
 //   2. Cloudflare Turnstile : le jeton est vérifié avec la clé secrète (TURNSTILE_SECRET_KEY).
 //   3. Limite par IP : 5 dépôts max par heure (en mémoire, par instance serverless).
-//   4. Validation stricte : champs bornés, fichier PDF/Word uniquement, 4 Mo max,
+//   4. Validation stricte : champs bornés, fichier PDF/JPG/PNG uniquement, 4 Mo max,
 //      type réel vérifié par les premiers octets (pas seulement l'extension).
 //
 // Configuration : voir docs/SETUP-CANDIDATURES.md.
@@ -22,10 +25,11 @@ const { createClient } = require('@supabase/supabase-js');
 
 const MAX_FILE = 4 * 1024 * 1024; // 4 Mo (le corps de requête Vercel est plafonné à 4,5 Mo)
 const LIMIT_PER_HOUR = 5;
+// Mêmes formats que l'upload volume du produit (SUPPORTED_MIME_TYPES).
 const CONTENT_TYPES = {
   pdf: 'application/pdf',
-  doc: 'application/msword',
-  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  jpg: 'image/jpeg',
+  png: 'image/png',
 };
 // Clé secrète de TEST Cloudflare (accepte tout) tant que TURNSTILE_SECRET_KEY n'est pas configurée.
 const TURNSTILE_TEST_SECRET = '1x0000000000000000000000000000000AA';
@@ -33,8 +37,8 @@ const TURNSTILE_TEST_SECRET = '1x0000000000000000000000000000000AA';
 function goodMagic(buf, ext) {
   if (buf.length < 8) return false;
   if (ext === 'pdf') return buf.slice(0, 5).toString('latin1') === '%PDF-';
-  if (ext === 'doc') return buf.slice(0, 4).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0]));
-  if (ext === 'docx') return buf.slice(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+  if (ext === 'jpg') return buf.slice(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]));
+  if (ext === 'png') return buf.slice(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47]));
   return false;
 }
 
@@ -162,22 +166,17 @@ async function handleCandidature(req, res) {
   if (truncated || file.buf.length > MAX_FILE) {
     return res.status(400).json({ error: 'Fichier trop lourd : 4 Mo maximum.' });
   }
-  const extMatch = file.name.match(/\.(pdf|docx?)$/i);
-  const ext = extMatch && extMatch[1].toLowerCase();
+  const extMatch = file.name.match(/\.(pdf|jpe?g|png)$/i);
+  let ext = extMatch && extMatch[1].toLowerCase();
+  if (ext === 'jpeg') ext = 'jpg';
   if (!ext || !CONTENT_TYPES[ext] || !goodMagic(file.buf, ext)) {
-    return res.status(400).json({ error: 'Format non accepté : PDF ou Word uniquement.' });
+    return res.status(400).json({ error: 'Format non accepté : PDF, JPG ou PNG uniquement.' });
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
-  const candidat = {
-    prenom: fields.prenom.trim(),
-    nom: fields.nom.trim(),
-    telephone: fields.telephone.trim(),
-    email: fields.email.trim().toLowerCase(),
-  };
 
   try {
-    await transmitToPipeline(supabase, candidat, file.buf, ext);
+    await transmitToPipeline(supabase, file.buf, ext);
   } catch (e) {
     console.error('Dépôt de CV échoué :', e && e.message);
     // L'étape en tête du message ("Upload du CV", "Resume", "Candidat",
@@ -194,88 +193,38 @@ async function handleCandidature(req, res) {
 }
 
 // Un CV déposé sur le site suit le MÊME cheminement que l'upload « volume »
-// du produit Smartlink (multi-diffusion) :
-//   1. dépôt du fichier dans le bucket "resumes" ;
-//   2. création du Resume en mode volume : upload_mode = 'VOLUME',
-//      parsing_pipeline = 'main', llm_state = 'waiting' (l'état réclamable par
-//      claim_llm), pas de target_offer_id (dépôt spontané, aucune offre visée) ;
-//   3. mise en file de la tâche LLM auprès de l'event-manager
-//      (POST /llm/llm-task, même appel que le CSM dans failed-cv.ts).
-// C'est ensuite le pipeline LLM qui parse le CV et crée le Candidat et les
-// liens — on ne crée RIEN à la main ici, exactement comme le flux volume.
-// Rollback : si l'insertion du Resume échoue, le fichier déposé est retiré.
-async function transmitToPipeline(supabase, candidat, buf, ext) {
-  // 1 — le fichier CV, à la racine du bucket, nom aléatoire.
+// du produit (admin/upload-resumes) :
+//   1. fichier dans le bucket "resumes", à la racine, nom `uuid.ext`
+//      (uploadOneResume : upsert + cacheControl 3600) ;
+//   2. ligne Resume minimale { bucket_path, upload_mode: VOLUME,
+//      target_offer_id: null, source: SITE } (insertManyResumesAction) — les
+//      défauts de la base posent ocr_state/llm_state = 'waiting' et
+//      parsing_pipeline = 'main'.
+// Le trigger SQL notify_ocr (INSERT sur Resume) appelle l'event-manager
+// lui-même : aucun appel réseau à faire ici. Le pipeline OCR → LLM extrait
+// ensuite l'identité du CV et crée le Candidat ; l'identité saisie dans le
+// formulaire n'est volontairement PAS écrite sur le Resume, comme en volume.
+// Rollback : si l'insert échoue, le fichier déposé est retiré.
+async function transmitToPipeline(supabase, buf, ext) {
   const bucketPath = `${crypto.randomUUID()}.${ext}`;
   {
     const { error } = await supabase.storage.from('resumes').upload(bucketPath, buf, {
       upsert: true,
       contentType: CONTENT_TYPES[ext],
-      cacheControl: 'no-store, max-age=0, must-revalidate',
+      cacheControl: '3600',
     });
     if (error) throw new Error(`Upload du CV : ${error.message}`);
   }
 
-  // 2 — le Resume en mode volume. On renseigne quand même l'identité saisie
-  // dans le formulaire (le parsing LLM complètera/confirmera depuis le CV) ;
-  // source = SITE marque la provenance, avec repli sans source si l'enum de
-  // la base la refuse (même repli que le CSM pour source = META).
-  const resumeRow = {
-    first_name: candidat.prenom,
-    last_name: candidat.nom,
-    email: candidat.email,
-    phone_number: candidat.telephone,
+  const { error } = await supabase.from('Resume').insert({
     bucket_path: bucketPath,
     upload_mode: 'VOLUME',
-    parsing_pipeline: 'main',
-    llm_state: 'waiting',
-  };
-  let resumeId = null;
-  try {
-    const resIns = await supabase
-      .from('Resume')
-      .insert({ ...resumeRow, source: 'SITE' })
-      .select('id')
-      .single();
-    if (!resIns.error) {
-      resumeId = String(resIns.data.id);
-    } else if (/source|enum|invalid input value/i.test(resIns.error.message)) {
-      const retry = await supabase.from('Resume').insert(resumeRow).select('id').single();
-      if (retry.error) throw new Error(`Resume : ${retry.error.message}`);
-      resumeId = String(retry.data.id);
-    } else {
-      throw new Error(`Resume : ${resIns.error.message}`);
-    }
-  } catch (e) {
+    target_offer_id: null,
+    source: 'SITE',
+  });
+  if (error) {
     await supabase.storage.from('resumes').remove([bucketPath]);
-    throw e;
-  }
-
-  // 3 — la tâche LLM (event-manager), avec un petit délai pour que la ligne
-  // 'waiting' soit déjà visible de claim_llm — mêmes paramètres que le CSM.
-  // Best effort : si l'event-manager est indisponible ou non configuré, la
-  // ligne reste en 'waiting' et resume_reconcile la reprendra au prochain
-  // passage — le dépôt du candidat n'échoue pas pour autant.
-  const emBase = String(process.env.EVENT_MANAGER_URL || '').trim().replace(/\/+$/, '');
-  if (!emBase) {
-    console.warn('EVENT_MANAGER_URL absente : Resume', resumeId, "en 'waiting', reprise par le cron.");
-    return;
-  }
-  try {
-    const headers = { 'content-type': 'application/json' };
-    const emKey = String(process.env.EVENT_MANAGER_API_KEY || '').trim();
-    if (emKey) headers['x-api-key'] = emKey;
-    const r = await fetch(`${emBase}/llm/llm-task`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ resumeId, delaySeconds: 5, pipeline: 'main' }),
-      signal: AbortSignal.timeout(20000),
-    });
-    const text = await r.text().catch(() => '');
-    if (!r.ok) throw new Error(`(${r.status}) ${text.slice(0, 200)}`);
-    console.info(`Dépôt site : Resume ${resumeId} en file → ${text.slice(0, 200)}`);
-  } catch (e) {
-    console.warn('Event-manager injoignable (Resume', resumeId, "reste en 'waiting') :", e && e.message);
+    throw new Error(`Resume : ${error.message}`);
   }
 }
 
