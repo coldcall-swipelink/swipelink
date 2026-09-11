@@ -25,8 +25,8 @@ Projet Vercel → Settings → Environment Variables, cochées **Production ET P
 |---|---|
 | `SUPABASE_URL` | `https://qxjpkjetclwxxpqkbibv.supabase.co` (le projet de production, celui du CSM) |
 | `SUPABASE_SERVICE_ROLE_KEY` | la clé service_role **de ce même projet** (⚠️ secrète, jamais côté client) |
-| `EVENT_MANAGER_URL` | même valeur que dans le projet Vercel du CSM |
-| `EVENT_MANAGER_API_KEY` | même valeur que dans le projet Vercel du CSM |
+| `EVENT_MANAGER_URL` | l'URL du service Cloud Run `event-manager-service` (GCP → Cloud Run, région europe-west1) |
+| `EVENT_MANAGER_API_KEY` | la clé `x-api-key` du même service (GCP → Cloud Run → révision → Variables & Secrets) |
 | `TURNSTILE_SECRET_KEY` | la secret key du widget Cloudflare Turnstile (voir étape 2) |
 
 Un build ne prend en compte que les variables présentes à son lancement : après un
