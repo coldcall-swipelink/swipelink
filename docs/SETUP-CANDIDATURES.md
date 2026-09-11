@@ -5,7 +5,7 @@ qui suit **exactement le cheminement de l'upload « volume » du produit Smartli
 
 1. le fichier part dans le bucket `resumes` du projet Supabase de production,
    à la racine (nom aléatoire `<uuid>.<ext>`) ;
-2. une ligne `Resume` est créée en mode volume : `upload_mode = 'volume'`,
+2. une ligne `Resume` est créée en mode volume : `upload_mode = 'VOLUME'`,
    `parsing_pipeline = 'main'`, `llm_state = 'waiting'` (l'état que `claim_llm`
    réclame), **pas de `target_offer_id`** (dépôt spontané, aucune offre visée),
    `source = 'SITE'` pour la provenance (repli sans `source` si l'enum la refuse) ;

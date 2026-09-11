@@ -2,7 +2,7 @@
 //
 // Un dépôt sur le site suit exactement le cheminement de l'upload « volume »
 // du produit Smartlink : fichier dans le bucket "resumes", ligne Resume en
-// mode volume (upload_mode = 'volume', parsing_pipeline = 'main',
+// mode volume (upload_mode = 'VOLUME', parsing_pipeline = 'main',
 // llm_state = 'waiting', pas de target_offer_id), puis mise en file de la
 // tâche LLM auprès de l'event-manager. Le pipeline LLM parse le CV et crée
 // le Candidat — rien n'est créé à la main ici, et aucune table dédiée au site.
@@ -196,7 +196,7 @@ async function handleCandidature(req, res) {
 // Un CV déposé sur le site suit le MÊME cheminement que l'upload « volume »
 // du produit Smartlink (multi-diffusion) :
 //   1. dépôt du fichier dans le bucket "resumes" ;
-//   2. création du Resume en mode volume : upload_mode = 'volume',
+//   2. création du Resume en mode volume : upload_mode = 'VOLUME',
 //      parsing_pipeline = 'main', llm_state = 'waiting' (l'état réclamable par
 //      claim_llm), pas de target_offer_id (dépôt spontané, aucune offre visée) ;
 //   3. mise en file de la tâche LLM auprès de l'event-manager
@@ -226,7 +226,7 @@ async function transmitToPipeline(supabase, candidat, buf, ext) {
     email: candidat.email,
     phone_number: candidat.telephone,
     bucket_path: bucketPath,
-    upload_mode: 'volume',
+    upload_mode: 'VOLUME',
     parsing_pipeline: 'main',
     llm_state: 'waiting',
   };
