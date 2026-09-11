@@ -183,9 +183,10 @@ async function handleCandidature(req, res) {
     // L'étape en tête du message ("Upload du CV", "Resume", "Candidat",
     // "Lien CV") est affichée au candidat : sans détail interne, mais assez
     // pour diagnostiquer depuis l'écran.
-    const stage = String((e && e.message) || '').split(':')[0].trim();
+    // TEMPORAIRE (diagnostic) : le détail complet est affiché au candidat le
+    // temps de la mise en service — à retirer avant l'annonce publique.
     return res.status(500).json({
-      error: `Impossible d'enregistrer le CV${stage ? ` (étape : ${stage})` : ''}. Réessayez plus tard.`,
+      error: `Impossible d'enregistrer le CV. Détail : ${String((e && e.message) || 'inconnu').slice(0, 300)}`,
     });
   }
 
