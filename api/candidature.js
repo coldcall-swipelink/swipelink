@@ -178,15 +178,9 @@ async function handleCandidature(req, res) {
   try {
     await transmitToPipeline(supabase, file.buf, ext);
   } catch (e) {
+    // Le détail (message Supabase) reste dans les logs Vercel, jamais à l'écran.
     console.error('Dépôt de CV échoué :', e && e.message);
-    // L'étape en tête du message ("Upload du CV", "Resume", "Candidat",
-    // "Lien CV") est affichée au candidat : sans détail interne, mais assez
-    // pour diagnostiquer depuis l'écran.
-    // TEMPORAIRE (diagnostic) : le détail complet est affiché au candidat le
-    // temps de la mise en service — à retirer avant l'annonce publique.
-    return res.status(500).json({
-      error: `Impossible d'enregistrer le CV. Détail : ${String((e && e.message) || 'inconnu').slice(0, 300)}`,
-    });
+    return res.status(500).json({ error: "Impossible d'enregistrer le CV, réessayez plus tard." });
   }
 
   return res.status(200).json({ ok: true });
