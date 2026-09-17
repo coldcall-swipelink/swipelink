@@ -4,7 +4,12 @@
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "blog.swipelink.fr" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "blog.swipelink.fr"
+        }
+      ],
       "destination": "https://swipelink.fr/:path*",
       "permanent": true
     },
@@ -32,6 +37,21 @@
       "source": "/app",
       "destination": "https://app.swipelink.fr/recruiter/auth",
       "permanent": false
+    },
+    {
+      "source": "/blog/quest-ce-que-la-rh-tech",
+      "destination": "/blog/hr-tech-quest-ce-que-cest",
+      "permanent": true
+    },
+    {
+      "source": "/blog/quest-ce-quun-metier-de-terrain",
+      "destination": "/blog/metiers-de-terrain",
+      "permanent": true
+    },
+    {
+      "source": "/blog/comment-recruter-en-grande-distribution",
+      "destination": "/blog/recruter-localement-en-grande-distribution",
+      "permanent": true
     }
   ],
   "headers": [
