@@ -13,7 +13,8 @@
 // Sécurité appliquée côté serveur (la seule qui fait foi) :
 //   1. Honeypot : le champ caché "site_web" rempli => réponse succès factice, rien n'est stocké.
 //   2. Cloudflare Turnstile : le jeton est vérifié avec la clé secrète (TURNSTILE_SECRET_KEY).
-//   3. Limite par IP : 5 dépôts max par heure (en mémoire, par instance serverless).
+//   3. Limite par IP (5/h, en mémoire) + disjoncteur global (DAILY_CAP/24 h,
+//      compté dans la base) : chaque dépôt coûte un passage OCR + LLM.
 //   4. Validation stricte : champs bornés, fichier PDF/JPG/PNG uniquement, 4 Mo max,
 //      type réel vérifié par les premiers octets (pas seulement l'extension).
 //
@@ -25,6 +26,11 @@ const { createClient } = require('@supabase/supabase-js');
 
 const MAX_FILE = 4 * 1024 * 1024; // 4 Mo (le corps de requête Vercel est plafonné à 4,5 Mo)
 const LIMIT_PER_HOUR = 5;
+// Disjoncteur global : dépôts max sur 24 h, tous visiteurs confondus. Chaque
+// dépôt déclenche un passage OCR + parsing LLM : le plafond borne le coût
+// absolu si une attaque distribuée passait Turnstile. Réglable sans
+// redéploiement via la variable Vercel DAILY_CAP.
+const DAILY_CAP = parseInt(process.env.DAILY_CAP || '200', 10);
 // Mêmes formats que l'upload volume du produit (SUPPORTED_MIME_TYPES).
 const CONTENT_TYPES = {
   pdf: 'application/pdf',
@@ -78,12 +84,16 @@ function parseForm(req) {
 }
 
 async function verifyTurnstile(token, ip) {
+  const secret = String(process.env.TURNSTILE_SECRET_KEY || '').trim();
+  // Fail closed : en production, pas de clé configurée = refus. La clé de TEST
+  // (qui accepte tout) ne sert qu'en preview/développement.
+  if (!secret && process.env.VERCEL_ENV === 'production') return false;
   try {
     const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        secret: process.env.TURNSTILE_SECRET_KEY || TURNSTILE_TEST_SECRET,
+        secret: secret || TURNSTILE_TEST_SECRET,
         response: token || '',
         remoteip: ip,
       }),
@@ -98,6 +108,14 @@ async function verifyTurnstile(token, ip) {
 // Limite par IP en mémoire : simple et sans table dédiée. Chaque instance
 // serverless garde son propre compteur (remis à zéro au recyclage de
 // l'instance) — suffisant pour casser les rafales, Turnstile fait le reste.
+function clientIp(req) {
+  const real = String(req.headers['x-real-ip'] || '').trim();
+  if (real) return real;
+  const xff = String(req.headers['x-forwarded-for'] || '')
+    .split(',').map((s) => s.trim()).filter(Boolean);
+  return xff[xff.length - 1] || 'inconnue';
+}
+
 const ipHits = new Map();
 function overIpLimit(ip) {
   const now = Date.now();
@@ -149,7 +167,7 @@ async function handleCandidature(req, res) {
   const fieldError = validateFields(fields);
   if (fieldError) return res.status(400).json({ error: fieldError });
 
-  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'inconnue';
+  const ip = clientIp(req);
 
   // 2. Turnstile.
   if (!(await verifyTurnstile(fields.turnstile_token, ip))) {
@@ -175,6 +193,18 @@ async function handleCandidature(req, res) {
 
   const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
 
+  // 5. Disjoncteur global, compté dans la base elle-même (Resume source=SITE
+  // des dernières 24 h) : fiable même avec plusieurs instances serverless.
+  const overCap = await overDailyCap(supabase);
+  if (overCap === null) {
+    return res.status(500).json({ error: 'Erreur interne, réessayez plus tard.' });
+  }
+  if (overCap) {
+    return res.status(429).json({
+      error: 'Beaucoup de candidatures aujourd\u2019hui ! Réessayez demain, ou envoyez votre CV à contact@swipelink.fr.',
+    });
+  }
+
   try {
     await transmitToPipeline(supabase, file.buf, ext);
   } catch (e) {
@@ -184,6 +214,18 @@ async function handleCandidature(req, res) {
   }
 
   return res.status(200).json({ ok: true });
+}
+
+// true = plafond atteint, false = ok, null = compte impossible (base en erreur).
+async function overDailyCap(supabase) {
+  const oneDayAgo = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  const { count, error } = await supabase
+    .from('Resume')
+    .select('id', { count: 'exact', head: true })
+    .eq('source', 'SITE')
+    .gte('created_at', oneDayAgo);
+  if (error) return null; // fail closed : sans compte fiable, on refuse le dépôt
+  return (count || 0) >= DAILY_CAP;
 }
 
 // Un CV déposé sur le site suit le MÊME cheminement que l'upload « volume »
@@ -227,3 +269,5 @@ module.exports.parseForm = parseForm;
 module.exports.validateFields = validateFields;
 module.exports.goodMagic = goodMagic;
 module.exports.transmitToPipeline = transmitToPipeline;
+module.exports.overDailyCap = overDailyCap;
+module.exports.clientIp = clientIp;

@@ -36,6 +36,7 @@ Projet Vercel → Settings → Environment Variables, cochées **Production ET P
 | `SUPABASE_URL` | `https://qxjpkjetclwxxpqkbibv.supabase.co` (le projet de production) |
 | `SUPABASE_SERVICE_ROLE_KEY` | la clé service_role **de ce même projet** (⚠️ secrète, jamais côté client) |
 | `TURNSTILE_SECRET_KEY` | la secret key du widget Cloudflare Turnstile (voir étape 2) |
+| `DAILY_CAP` | *(optionnel, défaut 200)* disjoncteur : dépôts max sur 24 h, tous visiteurs confondus |
 
 (`EVENT_MANAGER_URL` / `EVENT_MANAGER_API_KEY` ne servent plus : le trigger en
 base notifie l'event-manager tout seul. Elles peuvent être retirées.)
@@ -53,8 +54,16 @@ sur Vercel — les deux vont par paire.
 ## Sécurité en place (résumé)
 
 - Honeypot (champ caché) : les robots reçoivent un faux succès, rien n'est stocké.
-- Turnstile vérifié côté serveur (échec ou Cloudflare injoignable ⇒ refus).
-- Limite par IP : 5 dépôts/heure, comptés en mémoire par instance serverless.
+- Turnstile vérifié côté serveur ; **fail closed** : en production, clé absente,
+  échec ou Cloudflare injoignable ⇒ refus.
+- IP de confiance : `x-real-ip` (posé par Vercel), sinon la dernière entrée de
+  `x-forwarded-for` — la première est falsifiable par le client.
+- Limite par IP : 5 dépôts/heure (en mémoire par instance) + **disjoncteur
+  global** : `DAILY_CAP` dépôts max/24 h (défaut 200), compté dans la base
+  (`Resume` avec `source = SITE`), car chaque dépôt coûte un passage OCR + LLM.
 - Fichier : PDF/JPG/PNG uniquement, 4 Mo max, octets magiques vérifiés.
 - Champs bornés et validés côté serveur (le client ne fait foi de rien).
 - Rollback : si la création du Resume échoue, le fichier déposé est retiré.
+- Après la phase de test : retirer `vercel.app` des hostnames du widget
+  Turnstile (n'importe quel site *.vercel.app peut sinon afficher le widget
+  avec notre site key) et ne garder que `swipelink.fr`.
