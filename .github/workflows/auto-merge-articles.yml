@@ -1,0 +1,61 @@
+name: Auto-merge articles SEO
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  check_suite:
+    types: [completed]
+  status: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-merge-articles
+  cancel-in-progress: false
+
+jobs:
+  automerge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            let prs = [];
+            if (context.eventName === 'pull_request') {
+              prs = [context.payload.pull_request];
+            } else {
+              const list = await github.rest.pulls.list({ owner, repo, state: 'open', per_page: 50 });
+              prs = list.data;
+            }
+            for (const ref of prs) {
+              const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: ref.number });
+              if (pr.state !== 'open' || pr.draft) continue;
+              if (!pr.title.startsWith('Article SEO :')) continue;
+              if (!pr.head.ref.startsWith('claude/article-seo-')) continue;
+              if (!pr.head.repo || pr.head.repo.full_name !== `${owner}/${repo}`) continue;
+              const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: pr.number, per_page: 100 });
+              const allowed = f => /^blog\/[^\/]+\.html$/.test(f) || f === 'blog.html' || f === 'sitemap.xml' || f === 'docs/journal-articles-seo.md';
+              if (files.length === 0 || !files.every(f => allowed(f.filename))) {
+                core.info(`PR #${pr.number}: fichiers hors périmètre, on ne fusionne pas.`);
+                continue;
+              }
+              const checks = await github.paginate(github.rest.checks.listForRef, { owner, repo, ref: pr.head.sha, per_page: 100 });
+              const vChecks = checks.filter(c => c.name.toLowerCase().includes('vercel'));
+              const checksOk = vChecks.length > 0 && vChecks.every(c => c.status === 'completed' && c.conclusion === 'success');
+              const { data: combined } = await github.rest.repos.getCombinedStatusForRef({ owner, repo, ref: pr.head.sha });
+              const vStatuses = combined.statuses.filter(s => s.context.toLowerCase().includes('vercel'));
+              const statusOk = vStatuses.length > 0 && vStatuses.every(s => s.state === 'success');
+              if (!checksOk && !statusOk) {
+                core.info(`PR #${pr.number}: check Vercel pas encore vert.`);
+                continue;
+              }
+              try {
+                await github.rest.pulls.merge({ owner, repo, pull_number: pr.number, merge_method: 'squash' });
+                core.notice(`PR #${pr.number} fusionnée.`);
+              } catch (e) {
+                core.warning(`PR #${pr.number}: fusion impossible (${e.message}).`);
+              }
+            }
