@@ -73,6 +73,82 @@
   .cv-file button:hover { color: #dc2626; }
   .cv-form input[type="checkbox"] { accent-color: var(--brand); width: 18px; height: 18px; }
   @media (prefers-reduced-motion: reduce) { .candidat-step .num::before, .cv-card::before { animation: none; } .candidat-step:hover { transform: none; } }
+
+  /* Regles fonctionnelles conservees de la version d origine (honeypot, limites, modale, turnstile) */
+  /* Le badge « Espace candidat » affiche le S de Swipelink à la place du point animé */
+  .page-header .eyebrow::before { content: none; }
+  .cv-card > * { position: relative; }
+  .cv-drop:hover, .cv-drop.is-over { border-color: var(--primary); background: rgba(37,99,235,.04); }
+  /* Champ piège anti-bots : invisible pour les humains, rempli par les robots */
+  .cv-hp {
+    position: absolute !important;
+    left: -9999px; top: -9999px;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    opacity: 0;
+  }
+  .cv-limit {
+    display: none;
+    gap: .6rem; align-items: flex-start;
+    padding: .85rem 1.1rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    font-size: .87rem; color: #b91c1c; font-weight: 500;
+  }
+  .cv-limit.is-visible { display: flex; }
+  .cv-limit svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+  .cv-turnstile { display: flex; justify-content: center; min-height: 0; }
+  .cv-turnstile:not(:empty) { min-height: 65px; }
+  .cv-consent { display: flex; gap: .6rem; align-items: flex-start; font-size: .82rem; color: var(--text-soft); }
+  .cv-consent input { margin-top: 3px; accent-color: var(--primary); width: 15px; height: 15px; flex-shrink: 0; }
+  .cv-consent a { color: var(--primary); text-decoration: underline; }
+  .cv-consent.has-error { color: #dc2626; }
+  .cv-modal {
+    position: fixed; inset: 0; z-index: 1000;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 1.25rem;
+    background: rgba(15,23,42,.45);
+    backdrop-filter: blur(6px);
+  }
+  .cv-modal.is-open { display: flex; }
+  .cv-modal-card {
+    background: #fff;
+    border-radius: var(--r-lg, 24px);
+    max-width: 460px; width: 100%;
+    padding: 2.75rem 2.25rem 2.25rem;
+    text-align: center;
+    box-shadow: 0 24px 60px -12px rgba(15,23,42,.35);
+    position: relative;
+    animation: cvModalIn .35s var(--ease-out, ease-out);
+  }
+  @keyframes cvModalIn {
+    from { opacity: 0; transform: translateY(18px) scale(.96); }
+    to { opacity: 1; transform: none; }
+  }
+  .cv-modal-logo { display: block; height: 26px; width: auto; margin: 0 auto 1.5rem; }
+  .cv-modal-card .ok {
+    width: 68px; height: 68px; margin: 0 auto 1.4rem;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 10px 24px -8px rgba(16,185,129,.55);
+  }
+  .cv-modal-card .ok svg { width: 32px; height: 32px; }
+  .cv-modal-card h2 { margin: 0 0 .65rem; font-size: 1.45rem; letter-spacing: -.01em; }
+  .cv-modal-card p { margin: 0 0 1.6rem; color: var(--text-soft); font-size: .97rem; line-height: 1.6; }
+  .cv-modal-close {
+    position: absolute; top: 1rem; right: 1rem;
+    width: 36px; height: 36px;
+    border: 1px solid var(--border); border-radius: 999px;
+    background: #fff; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-soft); font-size: 1rem; line-height: 1;
+    transition: color .2s, border-color .2s;
+  }
+  .cv-modal-close:hover { color: var(--ink); border-color: var(--primary); }
 </style>
 <meta property="og:title" content="Espace candidat · Swipelink" />
 <meta property="og:description" content="Déposez votre CV et soyez contacté dès qu'une offre correspond à votre profil." />
