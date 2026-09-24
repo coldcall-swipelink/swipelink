@@ -110,14 +110,8 @@
 
 <!-- ============ HERO ============ -->
 <section class="hero">
-  <!-- Bulles animées multi-color, scoped au hero (3 max pour la perf GPU) -->
-  <div class="bubbles" aria-hidden="true">
-    <span class="bubble b1"></span>
-    <span class="bubble b2"></span>
-    <span class="bubble b3"></span>
-  </div>
-  <div class="hero-blob b1"></div>
-  <div class="hero-blob b2"></div>
+  <!-- Une seule source de lumière, dans la marque, derrière le titre -->
+  <div class="hero-light" aria-hidden="true"></div>
 
   <!-- Trust badge -->
   <div class="trust-badge" role="note">
@@ -172,6 +166,7 @@
     </div>
 
     <div class="hero-image-wrap" data-reveal data-reveal-delay="400">
+      <div class="hero-aura" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <div class="hero-image">
         <img src="/assets/image-23-04-2025-at-13-47.jpg" alt="Interface Swipelink, traitement automatique des candidatures" width="1280" height="800" fetchpriority="high" decoding="async">
       </div>
