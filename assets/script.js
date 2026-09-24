@@ -1,1 +1,49 @@
 (()=>{"use strict";(a=>document.readyState!=="loading"?a():document.addEventListener("DOMContentLoaded",a))(()=>{const a=document.documentElement,x=matchMedia("(hover: none), (max-width: 768px)").matches,A=matchMedia("(prefers-reduced-motion: reduce)").matches,i=document.querySelector(".navbar");let f=!1;const m=()=>{f||(f=!0,requestAnimationFrame(()=>{i&&i.classList.toggle("is-scrolled",window.scrollY>12),f=!1}))};addEventListener("scroll",m,{passive:!0}),m();const h=document.querySelector(".mobile-toggle");h&&i&&h.addEventListener("click",()=>{const e=i.classList.toggle("is-open");h.setAttribute("aria-expanded",e?"true":"false")}),document.querySelectorAll(".tabs").forEach(e=>{const t=e.querySelectorAll(".tab-btn"),o=e.querySelectorAll(".tab-panel");t.forEach(s=>{s.addEventListener("click",()=>{const n=s.dataset.target;t.forEach(r=>r.classList.toggle("is-active",r===s)),o.forEach(r=>r.classList.toggle("is-active",r.id===n))})})});const v=new IntersectionObserver(e=>{for(const t of e)t.isIntersecting&&(t.target.classList.add("is-visible"),v.unobserve(t.target))},{threshold:.1,rootMargin:"0px 0px -50px 0px"});document.querySelectorAll("[data-reveal], [data-stagger]").forEach(e=>v.observe(e));const p=new IntersectionObserver(e=>{for(const t of e){if(!t.isIntersecting)continue;const o=t.target,s=parseFloat(o.dataset.count),n=o.dataset.suffix||"",r=parseInt(o.dataset.duration,10)||1400,l=performance.now(),d=!Number.isInteger(s),g=o.parentElement,u=q=>{const I=Math.min((q-l)/r,1),L=1-Math.pow(1-I,4),b=s*L;o.textContent=(d?b.toFixed(1):Math.round(b))+n,I<1?requestAnimationFrame(u):g&&g.classList.add("is-counted")};requestAnimationFrame(u),p.unobserve(o)}},{threshold:.3,rootMargin:"0px 0px -10% 0px"});document.querySelectorAll("[data-count]").forEach(e=>p.observe(e));const E=new IntersectionObserver(e=>{for(const t of e)t.target.classList.toggle("is-offscreen",!t.isIntersecting)},{rootMargin:"300px 0px",threshold:0});document.querySelectorAll(".marquee-section, .hero").forEach(e=>{E.observe(e)});const y=document.querySelector(".hero, .page-header");y&&new IntersectionObserver(([t])=>{a.classList.toggle("hero-out",!t.isIntersecting)},{threshold:0,rootMargin:"0px"}).observe(y),document.addEventListener("visibilitychange",()=>{a.classList.toggle("is-tab-hidden",document.hidden)}),document.querySelectorAll(".faq .faq-item").forEach(e=>{e.addEventListener("toggle",()=>{e.open&&e.parentElement.querySelectorAll(".faq-item[open]").forEach(t=>{t!==e&&(t.open=!1)})})}),document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",t=>{const o=e.getAttribute("href");if(o.length>1){const s=document.querySelector(o);s&&(t.preventDefault(),s.scrollIntoView({behavior:"smooth",block:"start"}))}})}),document.querySelectorAll(".hunt-rotator").forEach(e=>{const t=e.querySelectorAll(".hunt-rotator-item");if(t.length<2)return;let o=0,s=null,n=!1;const r=()=>{t[o].classList.remove("is-active"),o=(o+1)%t.length,t[o].classList.add("is-active")},l=()=>{!s&&n&&(s=setInterval(r,2400))},d=()=>{s&&(clearInterval(s),s=null)};new IntersectionObserver(([u])=>{n=u.isIntersecting,n?l():d()},{threshold:.1}).observe(e),document.addEventListener("visibilitychange",()=>{document.hidden?d():l()})});const c=document.getElementById("cookiePopup");if(c){const e="sw-cookie-consent-v4";try{["sw-cookie-consent","sw-cookie-consent-v2","sw-cookie-consent-v3"].forEach(o=>localStorage.removeItem(o))}catch{}(()=>{try{return localStorage.getItem(e)}catch{return null}})()||(setTimeout(()=>{c.hidden=!1},800),c.addEventListener("click",o=>{const s=o.target.closest("[data-cookie-action]"),n=s&&s.dataset.cookieAction;if(n){try{localStorage.setItem(e,n)}catch{}c.style.transition="opacity .25s ease, transform .25s ease",c.style.opacity="0",c.style.transform="translateY(20px)",setTimeout(()=>{c.hidden=!0},280)}}))}})})();
+
+/* chat « Hugo est en ligne » : bulle en bas a droite ; identite (prenom, nom, e-mail) obligatoire avant tout envoi ; POST /api/chat */
+(function(){"use strict";
+var CHAT_AGENT={name:"Hugo",role:"Équipe Swipelink",status:"en ligne"};
+var KEY="sw-chat-identity";
+function ready(f){document.readyState!=="loading"?f():document.addEventListener("DOMContentLoaded",f)}
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+ready(function(){
+  if(document.getElementById("swChat"))return;
+  var launcher=el("button","chat-launcher",'<span class="chat-avatar" aria-hidden="true">'+CHAT_AGENT.name[0]+'</span><span>'+CHAT_AGENT.name+' est '+CHAT_AGENT.status+'<small>Posez votre question</small></span>');
+  launcher.type="button";launcher.id="swChat";launcher.setAttribute("aria-haspopup","dialog");launcher.setAttribute("aria-label","Ouvrir le chat avec "+CHAT_AGENT.name);
+  var panel=el("div","chat-panel");panel.setAttribute("role","dialog");panel.setAttribute("aria-label","Chat avec "+CHAT_AGENT.name);panel.hidden=true;
+  panel.innerHTML='<div class="chat-head"><span class="chat-avatar" aria-hidden="true">'+CHAT_AGENT.name[0]+'</span><div><b>'+CHAT_AGENT.name+'</b><span>'+CHAT_AGENT.role+' · '+CHAT_AGENT.status+'</span></div><button type="button" class="chat-close" aria-label="Fermer le chat">×</button></div>'
+   +'<div class="chat-body" aria-live="polite"></div>'
+   +'<form class="chat-form" novalidate><div class="chat-identity"><label>Prénom<input name="prenom" autocomplete="given-name" maxlength="60" required></label><label>Nom<input name="nom" autocomplete="family-name" maxlength="60" required></label><label>Adresse e-mail<input name="email" type="email" autocomplete="email" maxlength="100" required placeholder="vous@exemple.fr"></label></div>'
+   +'<label class="chat-hp" aria-hidden="true">Site web<input name="site_web" tabindex="-1" autocomplete="off"></label>'
+   +'<label>Votre message<textarea name="message" maxlength="2000" required placeholder="Écrivez votre message…"></textarea></label>'
+   +'<p class="chat-error" hidden></p><button type="submit" class="btn-liquid">Envoyer</button><p class="chat-hint">Prénom, nom et e-mail sont nécessaires pour qu’'+CHAT_AGENT.name+' puisse vous répondre.</p></form>';
+  document.body.appendChild(launcher);document.body.appendChild(panel);
+  var body=panel.querySelector(".chat-body"),form=panel.querySelector("form"),err=panel.querySelector(".chat-error"),send=form.querySelector('[type=submit]'),ident=panel.querySelector(".chat-identity");
+  function say(t,who){var m=el("div","chat-msg "+(who||"from-agent"),esc(t));body.appendChild(m);body.scrollTop=body.scrollHeight;return m}
+  function note(t){var m=el("div","chat-msg is-note",esc(t));body.appendChild(m);body.scrollTop=body.scrollHeight}
+  var saved=null;try{saved=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){}
+  if(saved){["prenom","nom","email"].forEach(function(k){if(saved[k])form[k].value=saved[k]})}
+  say("Bonjour, je suis "+CHAT_AGENT.name+". Une question sur SMARTLINK, un recrutement en cours ? Écrivez-moi, je vous réponds par e-mail.");
+  function open(){panel.hidden=false;requestAnimationFrame(function(){panel.classList.add("is-open")});document.body.classList.add("chat-open");
+    var first=[form.prenom,form.nom,form.email].find(function(i){return!i.value.trim()})||form.message;setTimeout(function(){first.focus()},250)}
+  function close(){panel.classList.remove("is-open");document.body.classList.remove("chat-open");setTimeout(function(){panel.hidden=true},260);launcher.focus()}
+  launcher.addEventListener("click",open);panel.querySelector(".chat-close").addEventListener("click",close);
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&panel.classList.contains("is-open"))close()});
+  function identityError(){var p=form.prenom.value.trim(),n=form.nom.value.trim(),m=form.email.value.trim();
+    if(p.length<2)return"Indiquez votre prénom.";if(n.length<2)return"Indiquez votre nom.";
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(m))return"Indiquez une adresse e-mail valide.";return null}
+  form.addEventListener("submit",function(e){e.preventDefault();err.hidden=true;
+    var ie=identityError();if(ie){err.textContent=ie;err.hidden=false;var f=form.prenom.value.trim().length<2?form.prenom:form.nom.value.trim().length<2?form.nom:form.email;f.focus();return}
+    var msg=form.message.value.trim();if(msg.length<2){err.textContent="Écrivez votre message.";err.hidden=false;form.message.focus();return}
+    var payload={prenom:form.prenom.value.trim(),nom:form.nom.value.trim(),email:form.email.value.trim(),message:msg,site_web:form.site_web.value,page:location.pathname};
+    try{localStorage.setItem(KEY,JSON.stringify({prenom:payload.prenom,nom:payload.nom,email:payload.email}))}catch(x){}
+    say(msg,"from-user");form.message.value="";send.disabled=true;
+    fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
+      .then(function(r){return r.json().catch(function(){return{}}).then(function(j){return{ok:r.ok,j:j}})})
+      .then(function(x){send.disabled=false;
+        if(x.ok){ident.hidden=true;note("Message transmis à "+CHAT_AGENT.name+" · réponse par e-mail à "+payload.email);}
+        else{err.textContent=x.j&&x.j.error||"Envoi impossible pour le moment.";err.hidden=false}})
+      .catch(function(){send.disabled=false;err.textContent="Connexion impossible. Écrivez-nous à contact@swipelink.fr.";err.hidden=false});
+  });
+});})();
