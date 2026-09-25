@@ -1,4 +1,4 @@
-# Chat « Hugo est en ligne »
+# Chat « Hugo, Céline et Lucas sont en ligne »
 
 La bulle en bas à droite (`assets/script.js`, section « chat ») envoie chaque
 message à `api/chat.js`, qui exige prénom, nom et e-mail, l'envoie par e-mail
@@ -31,4 +31,4 @@ alter table site_chat_messages enable row level security; -- la clé service pas
 
 ## Le prénom
 
-« Hugo » et « en ligne » sont dans `assets/script.js` (constante `CHAT_AGENT`).
+Les prénoms et photos (`assets/chat/*.webp`, 160×160) sont dans `assets/script.js` (constantes `CHAT_TEAM` et `TEAM_LABEL`).

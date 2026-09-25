@@ -1,4 +1,4 @@
-// api/chat.js — messages du chat « Hugo est en ligne » (bulle en bas à droite).
+// api/chat.js — messages du chat « Hugo, Céline et Lucas sont en ligne » (bulle en bas à droite).
 //
 // Le widget (assets/script.js, section « chat ») n'autorise l'envoi qu'une
 // fois prénom, nom et e-mail renseignés ; ce point d'entrée le revérifie,
