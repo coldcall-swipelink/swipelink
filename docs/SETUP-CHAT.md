@@ -9,7 +9,7 @@ et l'archive dans Supabase.
 | Variable | Rôle |
 |---|---|
 | `RESEND_API_KEY` | clé API Resend (resend.com), avec le domaine `swipelink.fr` vérifié |
-| `CHAT_TO` | destinataire des messages — défaut `contact@swipelink.fr` |
+| `CHAT_TO` | destinataires, séparés par des virgules — défaut `hugo@swipelink.fr, bilal@swipelink.fr` (rien à régler pour ces deux-là) |
 | `CHAT_FROM` | expéditeur — défaut `Chat Swipelink <chat@swipelink.fr>` (doit être sur le domaine vérifié) |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | déjà en place pour les candidatures ; servent à l'archivage |
 

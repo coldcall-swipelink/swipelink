@@ -3,7 +3,7 @@
 // Le widget (assets/script.js, section « chat ») n'autorise l'envoi qu'une
 // fois prénom, nom et e-mail renseignés ; ce point d'entrée le revérifie,
 // car seul le serveur fait foi. Chaque message part par e-mail (Resend) à
-// CHAT_TO et est archivé dans Supabase (table site_chat_messages) quand la
+// CHAT_TO (défaut : hugo@ et bilal@swipelink.fr) et est archivé dans Supabase (table site_chat_messages) quand la
 // base est configurée : si l'e-mail échoue mais que l'archivage passe, la
 // conversation n'est pas perdue.
 //
@@ -48,10 +48,18 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// Destinataires : CHAT_TO (liste séparée par des virgules) ou, par défaut,
+// Hugo et Bilal.
+const DEFAULT_TO = ['hugo@swipelink.fr', 'bilal@swipelink.fr'];
+function recipients() {
+  const list = String(process.env.CHAT_TO || '').split(',').map((s) => s.trim()).filter(Boolean);
+  return list.length ? list : DEFAULT_TO;
+}
+
 async function sendEmail(m, ip) {
   const key = String(process.env.RESEND_API_KEY || '').trim();
   if (!key) return { sent: false, reason: 'RESEND_API_KEY absente' };
-  const to = String(process.env.CHAT_TO || 'contact@swipelink.fr').trim();
+  const to = recipients();
   const from = String(process.env.CHAT_FROM || 'Chat Swipelink <chat@swipelink.fr>').trim();
   const subject = `[Chat] ${m.prenom} ${m.nom} — ${m.message.slice(0, 60)}${m.message.length > 60 ? '…' : ''}`;
   const html = `<p><strong>${escapeHtml(m.prenom)} ${escapeHtml(m.nom)}</strong> &lt;${escapeHtml(m.email)}&gt;</p>
@@ -60,7 +68,7 @@ async function sendEmail(m, ip) {
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to: [to], reply_to: m.email, subject, html }),
+    body: JSON.stringify({ from, to, reply_to: m.email, subject, html }),
   });
   if (!r.ok) return { sent: false, reason: `Resend ${r.status}` };
   return { sent: true };
@@ -113,3 +121,4 @@ async function handler(req, res) {
 module.exports = handler;
 module.exports.validate = validate;
 module.exports.overIpLimit = overIpLimit;
+module.exports.recipients = recipients;
