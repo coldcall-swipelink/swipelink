@@ -27,9 +27,19 @@ ready(function(){
   var saved=null;try{saved=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){}
   if(saved){["prenom","nom","email"].forEach(function(k){if(saved[k])form[k].value=saved[k]||""})}
   say("Bonjour 👋 Un recrutement compliqué ? Racontez-nous, on prend le relais. ⚡ Réponse dans l'heure.");var cta=el("div","chat-msg from-agent chat-cta",'Vous préférez en parler de vive voix ? <a href="/rdv" target="_blank" rel="noopener">📅 Réserver un créneau de 15 min</a>');body.appendChild(cta);
-  function open(){panel.hidden=false;requestAnimationFrame(function(){panel.classList.add("is-open");document.body.classList.add("chat-open")});
+  function open(){hideNudge();panel.hidden=false;requestAnimationFrame(function(){panel.classList.add("is-open");document.body.classList.add("chat-open")});
     var first=[form.prenom,form.nom,form.email].find(function(i){return!i.value.trim()})||form.message;setTimeout(function(){first.focus()},260)}
   function close(){panel.classList.remove("is-open");document.body.classList.remove("chat-open");setTimeout(function(){if(!panel.classList.contains("is-open"))panel.hidden=true},260);launcher.focus()}
+  /* appel : « C'est ici pour nous envoyer un message ! », une fois par session */
+  var NKEY="sw-chat-nudge",nudge=null,seen=false;try{seen=sessionStorage.getItem(NKEY)==="1"}catch(e){}
+  function hideNudge(){if(!nudge)return;nudge.classList.remove("is-on");try{sessionStorage.setItem(NKEY,"1")}catch(e){}setTimeout(function(){if(nudge){nudge.remove();nudge=null}},350)}
+  if(!seen&&!matchMedia("(prefers-reduced-motion: reduce)").matches){
+    nudge=el("div","chat-nudge",'<span>C\'est ici pour nous envoyer un message !</span><button type="button" class="chat-nudge-close" aria-label="Fermer">&times;</button><svg class="chat-nudge-arrow" viewBox="0 0 60 64" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4c4 22 14 38 42 50"/><path d="M34 46l14 8 2-16"/></svg>');
+    nudge.setAttribute("role","status");document.body.appendChild(nudge);
+    nudge.querySelector(".chat-nudge-close").addEventListener("click",hideNudge);
+    setTimeout(function(){if(nudge&&!panel.classList.contains("is-open"))nudge.classList.add("is-on")},document.getElementById("siteIntro")?5200:2600);
+    setTimeout(hideNudge,26000);
+  }
   launcher.addEventListener("click",open);panel.querySelector(".chat-close").addEventListener("click",close);
   document.addEventListener("keydown",function(e){if(e.key==="Escape"&&panel.classList.contains("is-open"))close()});
   function identityError(){var p=form.prenom.value.trim(),n=form.nom.value.trim(),m=form.email.value.trim();
