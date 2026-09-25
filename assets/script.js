@@ -11,7 +11,7 @@ function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp
 function stack(){return'<span class="chat-stack" aria-hidden="true">'+CHAT_TEAM.map(function(p){return'<img src="'+p.img+'" alt="" width="40" height="40" loading="lazy" decoding="async">'}).join("")+'<i class="chat-dot"></i></span>'}
 ready(function(){
   if(document.getElementById("swChat"))return;
-  var launcher=el("button","chat-launcher",stack()+'<span class="chat-launcher-text"><b>'+TEAM_LABEL+'</b> <em class="chat-live">sont en ligne</em><small>⚡ Réponse dans l\'heure</small></span>');
+  var launcher=el("button","chat-launcher",stack()+'<span class="chat-launcher-text"><b>'+TEAM_LABEL+'</b> sont en ligne<small>⚡ Réponse dans l\'heure</small></span>');
   launcher.type="button";launcher.id="swChat";launcher.setAttribute("aria-haspopup","dialog");launcher.setAttribute("aria-label","Ouvrir le chat avec l'équipe Swipelink");
   var panel=el("div","chat-panel");panel.setAttribute("role","dialog");panel.setAttribute("aria-label","Chat avec l'équipe Swipelink");panel.hidden=true;
   panel.innerHTML='<div class="chat-head">'+stack()+'<div><b>'+TEAM_LABEL+'</b><span><em class="chat-live"><i></i>En ligne</em> \u00b7 ⚡ réponse dans l\'heure</span></div><button type="button" class="chat-close" aria-label="Fermer le chat">&times;</button></div>'
