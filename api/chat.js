@@ -3,7 +3,7 @@
 // Le widget (assets/script.js, section « chat ») n'autorise l'envoi qu'une
 // fois prénom, nom et e-mail renseignés ; ce point d'entrée le revérifie,
 // car seul le serveur fait foi. Chaque message part par e-mail (Resend) à
-// CHAT_TO (défaut : hugo@ et bilal@swipelink.fr), via Web3Forms ou Resend, et est archivé dans Supabase (table site_chat_messages) quand la
+// CHAT_TO (défaut : hugo@ et bilal@swipelink.fr), via votre boîte mail (SMTP), Web3Forms ou Resend, et est archivé dans Supabase (table site_chat_messages) quand la
 // base est configurée : si l'e-mail échoue mais que l'archivage passe, la
 // conversation n'est pas perdue.
 //
@@ -107,12 +107,42 @@ async function sendViaResend(m, ip) {
   return { sent: true };
 }
 
+// Fournisseur 0 : votre propre boîte mail (SMTP). Aucun service tiers :
+// SMTP_USER = l'adresse qui envoie (ex. hugo@swipelink.fr), SMTP_PASS = son
+// mot de passe d'application. SMTP_HOST/SMTP_PORT facultatifs : Gmail /
+// Google Workspace par défaut ; Outlook/Microsoft 365 = smtp.office365.com:587 ;
+// OVH = ssl0.ovh.net:465.
+async function sendViaSmtp(m, ip) {
+  const user = String(process.env.SMTP_USER || '').trim();
+  const pass = String(process.env.SMTP_PASS || '').trim();
+  if (!user || !pass) return null;
+  const host = String(process.env.SMTP_HOST || 'smtp.gmail.com').trim();
+  const port = parseInt(process.env.SMTP_PORT, 10) || 465;
+  const nodemailer = require('nodemailer');
+  const transport = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
+  const text = `${m.prenom} ${m.nom} <${m.email}>\n\n${m.message}\n\n—\nPage : ${m.page || '—'} · IP : ${ip}`;
+  try {
+    await transport.sendMail({
+      from: `"Chat Swipelink" <${user}>`,
+      to: recipients().join(', '),
+      replyTo: m.email,
+      subject: subjectOf(m),
+      text,
+    });
+    return { sent: true };
+  } catch (e) {
+    return { sent: false, reason: `SMTP : ${e && e.message}` };
+  }
+}
+
 async function sendEmail(m, ip) {
+  const viaSmtp = await sendViaSmtp(m, ip);
+  if (viaSmtp && viaSmtp.sent) return viaSmtp;
   const viaForms = await sendViaWeb3Forms(m, ip);
   if (viaForms && viaForms.sent) return viaForms;
   const viaResend = await sendViaResend(m, ip);
   if (viaResend) return viaResend;
-  return viaForms || { sent: false, reason: 'aucun fournisseur (WEB3FORMS_KEY ou RESEND_API_KEY)' };
+  return viaSmtp || viaForms || { sent: false, reason: 'aucun fournisseur (SMTP_USER/SMTP_PASS, WEB3FORMS_KEY ou RESEND_API_KEY)' };
 }
 
 async function archive(m, ip) {
