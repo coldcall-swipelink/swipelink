@@ -14,7 +14,7 @@ ready(function(){
   var launcher=el("button","chat-launcher",stack()+'<span class="chat-launcher-text"><b>'+TEAM_LABEL+'</b> sont en ligne<small>⚡ Réponse assurée dans l\'heure</small></span>');
   launcher.type="button";launcher.id="swChat";launcher.setAttribute("aria-haspopup","dialog");launcher.setAttribute("aria-label","Ouvrir le chat avec l'équipe Swipelink");
   var panel=el("div","chat-panel");panel.setAttribute("role","dialog");panel.setAttribute("aria-label","Chat avec l'équipe Swipelink");panel.hidden=true;
-  panel.innerHTML='<div class="chat-head">'+stack()+'<div><b>'+TEAM_LABEL+'</b><span>En ligne \u00b7 ⚡ réponse assurée dans l\'heure</span></div><button type="button" class="chat-close" aria-label="Fermer le chat">&times;</button></div>'
+  panel.innerHTML='<div class="chat-head">'+stack()+'<div><b>'+TEAM_LABEL+'</b><span>En ligne \u00b7 ⚡ réponse dans l\'heure</span></div><button type="button" class="chat-close" aria-label="Fermer le chat">&times;</button></div>'
    +'<div class="chat-body" aria-live="polite"></div>'
    +'<form class="chat-form" novalidate><div class="chat-identity"><input name="prenom" autocomplete="given-name" maxlength="60" placeholder="Prénom" aria-label="Prénom" required><input name="nom" autocomplete="family-name" maxlength="60" placeholder="Nom" aria-label="Nom" required><input name="email" type="email" autocomplete="email" maxlength="120" placeholder="Adresse e-mail" aria-label="Adresse e-mail" required></div>'
    +'<label class="chat-hp" aria-hidden="true">Site web<input name="site_web" tabindex="-1" autocomplete="off"></label>'
