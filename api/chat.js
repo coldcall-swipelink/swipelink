@@ -3,7 +3,7 @@
 // Le widget (assets/script.js, section « chat ») n'autorise l'envoi qu'une
 // fois prénom, nom et e-mail renseignés ; ce point d'entrée le revérifie,
 // car seul le serveur fait foi. Chaque message part par e-mail (Resend) à
-// CHAT_TO (défaut : hugo@ et bilal@swipelink.fr) et est archivé dans Supabase (table site_chat_messages) quand la
+// CHAT_TO (défaut : hugo@ et bilal@swipelink.fr), via Web3Forms ou Resend, et est archivé dans Supabase (table site_chat_messages) quand la
 // base est configurée : si l'e-mail échoue mais que l'archivage passe, la
 // conversation n'est pas perdue.
 //
@@ -59,22 +59,60 @@ function recipients() {
   return list.length ? list : DEFAULT_TO;
 }
 
-async function sendEmail(m, ip) {
+function subjectOf(m) {
+  return `[Chat] ${m.prenom} ${m.nom} — ${m.message.slice(0, 60)}${m.message.length > 60 ? '…' : ''}`;
+}
+
+// Fournisseur 1 : Web3Forms, le plus simple. On s'inscrit avec une adresse
+// e-mail, on reçoit une clé, aucun réglage DNS. La clé est liée à l'adresse
+// qui reçoit ; les autres destinataires sont mis en copie.
+async function sendViaWeb3Forms(m, ip) {
+  const key = String(process.env.WEB3FORMS_KEY || '').trim();
+  if (!key) return null;
+  const to = recipients();
+  const r = await fetch('https://api.web3forms.com/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      access_key: key,
+      subject: subjectOf(m),
+      from_name: 'Chat Swipelink',
+      name: `${m.prenom} ${m.nom}`,
+      email: m.email,
+      replyto: m.email,
+      ccemail: to.slice(1).join(','),
+      message: `${m.message}\n\n—\nPage : ${m.page || '—'} · IP : ${ip}`,
+    }),
+  });
+  if (!r.ok) return { sent: false, reason: `Web3Forms ${r.status}` };
+  const j = await r.json().catch(() => ({}));
+  return j && j.success === false ? { sent: false, reason: `Web3Forms : ${j.message || 'refus'}` } : { sent: true };
+}
+
+// Fournisseur 2 : Resend (domaine swipelink.fr vérifié chez Resend).
+async function sendViaResend(m, ip) {
   const key = String(process.env.RESEND_API_KEY || '').trim();
-  if (!key) return { sent: false, reason: 'RESEND_API_KEY absente' };
+  if (!key) return null;
   const to = recipients();
   const from = String(process.env.CHAT_FROM || 'Chat Swipelink <chat@swipelink.fr>').trim();
-  const subject = `[Chat] ${m.prenom} ${m.nom} — ${m.message.slice(0, 60)}${m.message.length > 60 ? '…' : ''}`;
   const html = `<p><strong>${escapeHtml(m.prenom)} ${escapeHtml(m.nom)}</strong> &lt;${escapeHtml(m.email)}&gt;</p>
 <p style="white-space:pre-wrap">${escapeHtml(m.message)}</p>
 <hr><p style="color:#64748b;font-size:12px">Page : ${escapeHtml(m.page || '—')} · IP : ${escapeHtml(ip)}</p>`;
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to, reply_to: m.email, subject, html }),
+    body: JSON.stringify({ from, to, reply_to: m.email, subject: subjectOf(m), html }),
   });
   if (!r.ok) return { sent: false, reason: `Resend ${r.status}` };
   return { sent: true };
+}
+
+async function sendEmail(m, ip) {
+  const viaForms = await sendViaWeb3Forms(m, ip);
+  if (viaForms && viaForms.sent) return viaForms;
+  const viaResend = await sendViaResend(m, ip);
+  if (viaResend) return viaResend;
+  return viaForms || { sent: false, reason: 'aucun fournisseur (WEB3FORMS_KEY ou RESEND_API_KEY)' };
 }
 
 async function archive(m, ip) {
