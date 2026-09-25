@@ -11,22 +11,22 @@ function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp
 function stack(){return'<span class="chat-stack" aria-hidden="true">'+CHAT_TEAM.map(function(p){return'<img src="'+p.img+'" alt="" width="40" height="40" loading="lazy" decoding="async">'}).join("")+'<i class="chat-dot"></i></span>'}
 ready(function(){
   if(document.getElementById("swChat"))return;
-  var launcher=el("button","chat-launcher",stack()+'<span class="chat-launcher-text"><b>'+TEAM_LABEL+'</b> sont en ligne<small>Équipe Swipelink</small></span>');
+  var launcher=el("button","chat-launcher",stack()+'<span class="chat-launcher-text"><b>'+TEAM_LABEL+'</b> sont en ligne<small>⚡ Réponse assurée dans l\'heure</small></span>');
   launcher.type="button";launcher.id="swChat";launcher.setAttribute("aria-haspopup","dialog");launcher.setAttribute("aria-label","Ouvrir le chat avec l'équipe Swipelink");
   var panel=el("div","chat-panel");panel.setAttribute("role","dialog");panel.setAttribute("aria-label","Chat avec l'équipe Swipelink");panel.hidden=true;
-  panel.innerHTML='<div class="chat-head">'+stack()+'<div><b>Équipe Swipelink</b><span>'+TEAM_LABEL+' · en ligne</span></div><button type="button" class="chat-close" aria-label="Fermer le chat">&times;</button></div>'
+  panel.innerHTML='<div class="chat-head">'+stack()+'<div><b>'+TEAM_LABEL+'</b><span>En ligne \u00b7 ⚡ réponse dans l\'heure</span></div><button type="button" class="chat-close" aria-label="Fermer le chat">&times;</button></div>'
    +'<div class="chat-body" aria-live="polite"></div>'
    +'<form class="chat-form" novalidate><div class="chat-identity"><input name="prenom" autocomplete="given-name" maxlength="60" placeholder="Prénom" aria-label="Prénom" required><input name="nom" autocomplete="family-name" maxlength="60" placeholder="Nom" aria-label="Nom" required><input name="email" type="email" autocomplete="email" maxlength="120" placeholder="Adresse e-mail" aria-label="Adresse e-mail" required></div>'
    +'<label class="chat-hp" aria-hidden="true">Site web<input name="site_web" tabindex="-1" autocomplete="off"></label>'
-   +'<textarea name="message" maxlength="2000" required placeholder="Votre message…" aria-label="Votre message"></textarea>'
-   +'<p class="chat-error" hidden></p><button type="submit" class="chat-send">Envoyer</button><p class="chat-hint">Réponse par e-mail. Prénom, nom et e-mail sont nécessaires.</p></form>';
+   +'<textarea name="message" maxlength="2000" required placeholder="Décrivez votre recrutement : poste, ville, urgence…" aria-label="Votre message"></textarea>'
+   +'<p class="chat-error" hidden></p><button type="submit" class="chat-send">Envoyer \u00b7 réponse dans l\'heure ⚡</button><p class="chat-hint">Prénom, nom et e-mail nécessaires pour vous répondre.</p></form>';
   document.body.appendChild(launcher);document.body.appendChild(panel);
   var body=panel.querySelector(".chat-body"),form=panel.querySelector("form"),err=panel.querySelector(".chat-error"),ident=panel.querySelector(".chat-identity"),send=panel.querySelector(".chat-send"),hint=panel.querySelector(".chat-hint");
   function say(t,who){var m=el("div","chat-msg "+(who||"from-agent"),esc(t));body.appendChild(m);body.scrollTop=body.scrollHeight;return m}
   function note(t){var m=el("div","chat-msg is-note",esc(t));body.appendChild(m);body.scrollTop=body.scrollHeight}
   var saved=null;try{saved=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){}
   if(saved){["prenom","nom","email"].forEach(function(k){if(saved[k])form[k].value=saved[k]||""})}
-  say("Bonjour 👋 Une question sur SMARTLINK ou un recrutement en cours ? Écrivez-nous, on vous répond par e-mail.");
+  say("Bonjour 👋 Un recrutement compliqué ? Poste en tension, profil introuvable, urgence… Racontez-nous, on prend le relais. ⚡ Réponse assurée dans l'heure.");var cta=el("div","chat-msg from-agent chat-cta",'Vous préférez en parler de vive voix ? <a href="/rdv" target="_blank" rel="noopener">📅 Réserver un créneau de 15 min</a>');body.appendChild(cta);
   function open(){panel.hidden=false;requestAnimationFrame(function(){panel.classList.add("is-open");document.body.classList.add("chat-open")});
     var first=[form.prenom,form.nom,form.email].find(function(i){return!i.value.trim()})||form.message;setTimeout(function(){first.focus()},260)}
   function close(){panel.classList.remove("is-open");document.body.classList.remove("chat-open");setTimeout(function(){if(!panel.classList.contains("is-open"))panel.hidden=true},260);launcher.focus()}
@@ -44,7 +44,7 @@ ready(function(){
     fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
       .then(function(r){return r.json().catch(function(){return{}}).then(function(j){return{ok:r.ok,j:j}})})
       .then(function(x){send.disabled=false;
-        if(x.ok){ident.hidden=true;hint.hidden=true;note("Message transmis à l'équipe · réponse par e-mail à "+payload.email)}
+        if(x.ok){ident.hidden=true;hint.hidden=true;note("Message transmis ⚡ Réponse assurée dans l'heure, à "+payload.email)}
         else{err.textContent=x.j&&x.j.error||"Envoi impossible pour le moment.";err.hidden=false}})
       .catch(function(){send.disabled=false;err.textContent="Connexion impossible. Écrivez-nous à contact@swipelink.fr.";err.hidden=false});
   });
