@@ -31,6 +31,9 @@ function overIpLimit(ip) {
 }
 
 function validate(b) {
+  for (const k of ['prenom', 'nom', 'email', 'message', 'page']) {
+    if (b[k] != null && typeof b[k] !== 'string') return { error: 'Requête invalide.' };
+  }
   const prenom = String(b.prenom || '').trim();
   const nom = String(b.nom || '').trim();
   const email = String(b.email || '').trim();
@@ -86,6 +89,12 @@ async function archive(m, ip) {
   return error ? { stored: false, reason: error.message } : { stored: true };
 }
 
+const ALLOWED_HOSTS = /^(?:[a-z0-9-]+\.)*(?:swipelink\.fr|vercel\.app)$/i;
+function sameSite(req) {
+  const src = req.headers.origin || req.headers.referer || '';
+  try { return ALLOWED_HOSTS.test(new URL(src).hostname); } catch { return false; }
+}
+
 async function readJson(req) {
   if (req.body && typeof req.body === 'object') return req.body;
   const chunks = [];
@@ -95,6 +104,10 @@ async function readJson(req) {
 
 async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée.' });
+  // Le widget est le seul client : on refuse les envois depuis un autre site
+  // (formulaires forgés, scripts). Les navigateurs posent toujours Origin sur
+  // un POST cross-site ; l'absence d'Origin (curl, outils) est refusée aussi.
+  if (!sameSite(req)) return res.status(403).json({ error: 'Origine non autorisée.' });
   let body;
   try { body = await readJson(req); } catch { return res.status(400).json({ error: 'Requête invalide.' }); }
 
@@ -122,3 +135,4 @@ module.exports = handler;
 module.exports.validate = validate;
 module.exports.overIpLimit = overIpLimit;
 module.exports.recipients = recipients;
+module.exports.sameSite = sameSite;

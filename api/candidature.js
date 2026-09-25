@@ -30,7 +30,7 @@ const LIMIT_PER_HOUR = 5;
 // dépôt déclenche un passage OCR + parsing LLM : le plafond borne le coût
 // absolu si une attaque distribuée passait Turnstile. Réglable sans
 // redéploiement via la variable Vercel DAILY_CAP.
-const DAILY_CAP = parseInt(process.env.DAILY_CAP || '200', 10);
+const DAILY_CAP = Number.isFinite(parseInt(process.env.DAILY_CAP, 10)) ? parseInt(process.env.DAILY_CAP, 10) : 200;
 // Mêmes formats que l'upload volume du produit (SUPPORTED_MIME_TYPES).
 const CONTENT_TYPES = {
   pdf: 'application/pdf',
@@ -79,6 +79,8 @@ function parseForm(req) {
     });
     bb.on('close', () => resolve({ fields, file, truncated }));
     bb.on('error', reject);
+    req.on('error', reject);
+    req.on('aborted', () => reject(new Error('Envoi interrompu.')));
     req.pipe(bb);
   });
 }
@@ -169,17 +171,9 @@ async function handleCandidature(req, res) {
 
   const ip = clientIp(req);
 
-  // 2. Turnstile.
-  if (!(await verifyTurnstile(fields.turnstile_token, ip))) {
-    return res.status(403).json({ error: 'Vérification anti-robots échouée. Rechargez la page et réessayez.' });
-  }
-
-  // 3. Limite par IP.
-  if (overIpLimit(ip)) {
-    return res.status(429).json({ error: 'Trop de dépôts récents. Réessayez dans une heure.' });
-  }
-
-  // 4. Fichier.
+  // 2. Fichier : contrôles locaux et gratuits d'abord, pour qu'un CV refusé
+  //    (absent, trop lourd, mauvais format) ne consomme ni le jeton Turnstile
+  //    (à usage unique) ni le quota par IP.
   if (!file || !file.buf.length) return res.status(400).json({ error: 'CV manquant.' });
   if (truncated || file.buf.length > MAX_FILE) {
     return res.status(400).json({ error: 'Fichier trop lourd : 4 Mo maximum.' });
@@ -189,6 +183,16 @@ async function handleCandidature(req, res) {
   if (ext === 'jpeg') ext = 'jpg';
   if (!ext || !CONTENT_TYPES[ext] || !goodMagic(file.buf, ext)) {
     return res.status(400).json({ error: 'Format non accepté : PDF, JPG ou PNG uniquement.' });
+  }
+
+  // 3. Limite par IP.
+  if (overIpLimit(ip)) {
+    return res.status(429).json({ error: 'Trop de dépôts récents. Réessayez dans une heure.' });
+  }
+
+  // 4. Turnstile, en dernier : le jeton est consommé par la vérification.
+  if (!(await verifyTurnstile(fields.turnstile_token, ip))) {
+    return res.status(403).json({ error: 'Vérification anti-robots échouée. Rechargez la page et réessayez.' });
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
